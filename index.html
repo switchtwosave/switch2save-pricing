@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Price Increase Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f10;
+  --surface:#12181a;
+  --surface2:#161d20;
+  --line:#243033;
+  --line-soft:#1b2427;
+  --text:#eef2f1;
+  --muted:#c3d0d2;
+  --faint:#93a3a6;
+  --teal:#3fd0c9;
+  --teal-dim:#1f6f6c;
+  --green:#57d977;
+  --gold:#e0b85a;
+  --r:16px;
+  --u: clamp(10px, 1.15vh, 18px);  /* vertical rhythm unit */
+  --f: clamp(13px, 1.62vh, 21px);   /* base type scale driver */
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;overflow:hidden;
+  background:
+    radial-gradient(1100px 620px at 88% 6%, rgba(63,208,201,.10), transparent 60%),
+    radial-gradient(900px 560px at 4% 92%, rgba(224,184,90,.07), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  font-size:var(--f);line-height:1.35;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- shell ---------- */
+.app{height:100dvh;display:flex;flex-direction:column;padding:calc(var(--u)*1.4) calc(var(--u)*2) calc(var(--u)*1.4);gap:calc(var(--u)*1.2)}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*2);flex:0 0 auto}
+.brand{text-decoration:none;color:inherit;display:flex;align-items:center;gap:calc(var(--u)*1.2);min-width:0}
+.logo{flex:0 0 auto;color:var(--teal)}
+h1{margin:0;font-family:'Instrument Serif',Georgia,serif;font-weight:400;letter-spacing:-.01em;
+   font-size:calc(var(--f)*2.05);line-height:1.02}
+h1 em{font-style:italic;color:var(--teal)}
+.sub{color:var(--muted);font-size:calc(var(--f)*.82);margin-top:2px;max-width:62ch}
+/* ---------- brand + steps ---------- */
+.wordmark{font-size:calc(var(--f)*.78);letter-spacing:.26em;text-transform:uppercase;font-weight:800;
+  color:var(--teal);margin:0 0 calc(var(--u)*.28)}
+.wordmark b{color:var(--gold);font-weight:800}
+.wordmark.big{font-size:calc(var(--f)*1.35);letter-spacing:.24em;margin:0}
+.brand:hover .wordmark.big{filter:brightness(1.15)}
+.steps{flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*.5);margin-left:auto}
+.step{text-decoration:none;cursor:pointer;transition:border-color .16s ease,background .16s ease;display:flex;align-items:center;gap:calc(var(--u)*.55);background:#0e1416;border:1px solid var(--line);
+  border-radius:999px;padding:calc(var(--u)*.48) calc(var(--u)*1.05);white-space:nowrap}
+.step .n{width:1.55em;height:1.55em;flex:0 0 auto;display:grid;place-items:center;border-radius:50%;
+  background:#1b2426;color:var(--faint);font-size:calc(var(--f)*.7);font-weight:800}
+.step .t{font-size:calc(var(--f)*.78);font-weight:700;color:var(--muted);letter-spacing:.02em}
+.step:hover{border-color:var(--teal)}
+.step:hover .t{color:var(--text)}
+.step.on{border-color:rgba(63,208,201,.55);background:rgba(63,208,201,.10)}
+.step.on .n{background:var(--teal);color:#04211f}
+.step.on .t{color:var(--text)}
+.step-arrow{color:var(--faint);font-size:calc(var(--f)*.85)}
+.stamp{flex:0 0 auto;text-align:right;margin-left:calc(var(--u)*1.4);font-size:calc(var(--f)*.72);color:var(--faint);letter-spacing:.12em;text-transform:uppercase}
+.stamp b{display:block;font-size:calc(var(--f)*.92);color:var(--teal);letter-spacing:.02em;text-transform:none;font-weight:700}
+
+/* ---------- layout ---------- */
+.grid{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:calc(var(--u)*2.6)}
+.card{background:linear-gradient(180deg,rgba(22,29,32,.96),rgba(15,20,22,.96));
+      border:1px solid rgba(63,208,201,.30);border-radius:var(--r);min-height:0;display:flex;flex-direction:column;
+      box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.card.pad{padding:calc(var(--u)*1.15) calc(var(--u)*1.35)}
+.card.bare{background:none;background-image:none;border-color:transparent;box-shadow:none;border:0;box-shadow:none;padding-left:0;padding-right:0}
+.ttl{font-size:calc(var(--f)*.72);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:0 0 calc(var(--u)*.75)}
+
+/* ---------- inputs ---------- */
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:calc(var(--u)*.6);min-height:0;overflow:hidden}
+.botstack{margin-top:auto;display:flex;flex-direction:column;gap:calc(var(--u)*.5);flex:0 0 auto}
+.avgbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.15);
+  background:radial-gradient(120% 140% at 50% 0%,rgba(63,208,201,.14),transparent 70%),#101719;
+  border:1px solid rgba(63,208,201,.4);border-radius:14px;padding:calc(var(--u)*.6) calc(var(--u)*1.1)}
+.avgk{font-size:calc(var(--f)*.86);letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:800}
+.avgv{font-size:calc(var(--f)*2.4);font-weight:800;color:var(--text);line-height:1.05;letter-spacing:-.01em}
+.col::-webkit-scrollbar{display:none}
+label{display:block;font-size:calc(var(--f)*.7);letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:calc(var(--u)*.4)}
+input[type=text],input[type=number]{width:100%;padding:calc(var(--u)*.72) calc(var(--u)*.9);border-radius:10px;
+  border:1px solid var(--line);background:#0e1416;outline:none;font-size:calc(var(--f)*1.02);font-weight:600;
+  transition:border-color .15s,box-shadow .15s}
+
+/* ---------- simplified question list ---------- */
+.qs{display:flex;flex-direction:column;gap:calc(var(--u)*.8)}
+.qrow{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.8)}
+.qrow.three{grid-template-columns:1fr 1fr 1fr;gap:calc(var(--u)*.6)}
+.qrow.three .ql{font-size:calc(var(--f)*.88)}
+.qrow .q{align-items:flex-start}
+.qrow .ql{min-height:2.6em}
+.q{display:flex;align-items:flex-start;gap:calc(var(--u)*.7)}
+.q .qn{margin-top:calc(var(--u)*-.05)}
+.q .qn{flex:0 0 auto;width:2em;height:2em;border-radius:50%;display:grid;place-items:center;
+  font-size:calc(var(--f)*.95);font-weight:800;background:rgba(63,208,201,.13);color:var(--teal);
+  border:1px solid rgba(63,208,201,.4)}
+.q .qb{flex:1 1 auto;min-width:0}
+.q .ql{display:block;margin:0 0 calc(var(--u)*.32);font-size:calc(var(--f)*.98);font-weight:700;
+  letter-spacing:0;text-transform:none;color:var(--text)}
+.q .qh{display:block;font-size:calc(var(--f)*.74);color:var(--faint);margin-top:calc(var(--u)*.25)}
+.q input[type=text],.q input[type=number]{font-size:calc(var(--f)*1.35);font-weight:700;
+  padding:calc(var(--u)*.6) calc(var(--u)*.85)}
+.tgls{display:flex;flex-direction:column;gap:calc(var(--u)*.45);margin-top:0}
+.tgwrap{background:#0e1416;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  transition:border-color .18s ease}
+.tgwrap.open{border-color:rgba(63,208,201,.5)}
+.tg{display:flex;align-items:center;justify-content:space-between;gap:var(--u);
+  padding:calc(var(--u)*.65) calc(var(--u)*1.05)}
+.reveal{max-height:0;opacity:0;overflow:hidden;transition:max-height .28s ease,opacity .22s ease}
+.tgwrap.open .reveal{max-height:44vh;opacity:1}
+.revealbody{padding:0 calc(var(--u)*1.05) calc(var(--u)*.8);border-top:1px solid var(--line-soft);
+  margin-top:0;padding-top:calc(var(--u)*.7)}
+.revealbody label{font-size:calc(var(--f)*.68)}
+.tg .tl{font-size:calc(var(--f)*.98);font-weight:700;color:var(--text)}
+.tg .th{display:block;font-size:calc(var(--f)*.74);color:var(--faint);font-weight:500;margin-top:2px}
+.sw.lg{width:62px;height:34px}
+.sw.lg i::after{top:4px;left:4px;width:26px;height:26px}
+.sw.lg input:checked + i::after{transform:translateX(28px)}
+.p49row{display:flex;align-items:center;gap:calc(var(--u)*.5)}
+.p49row input[type=number]{flex:1 1 auto;min-width:0}
+.p49{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;font-size:calc(var(--f)*.72);font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(63,208,201,.4);border-radius:999px;padding:calc(var(--u)*.28) calc(var(--u)*.6)}
+.p49 input{accent-color:var(--teal);width:14px;height:14px;margin:0}
+.advrow{display:flex;justify-content:flex-end;margin-top:calc(var(--u)*.3)}
+.ghost.sm{font-size:calc(var(--f)*.72);padding:calc(var(--u)*.28) calc(var(--u)*.7)}
+.adv{margin-top:calc(var(--u)*.2);border-top:1px solid var(--line-soft);padding-top:calc(var(--u)*.5)}
+.adv summary{cursor:pointer;list-style:none;font-size:calc(var(--f)*.8);font-weight:700;color:var(--faint);
+  letter-spacing:.06em;text-transform:uppercase}
+.adv summary::-webkit-details-marker{display:none}
+.adv summary::before{content:"+ ";color:var(--teal)}
+.adv[open] summary::before{content:"– "}
+.adv summary:hover{color:var(--teal)}
+.advbody{display:flex;flex-direction:column;gap:calc(var(--u)*.9);margin-top:calc(var(--u)*.9)}
+input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.9)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*.9)}
+.seg.wrap4{flex-wrap:wrap}
+.seg.wrap4 button{flex:1 1 40%;font-size:calc(var(--f)*.78);padding:calc(var(--u)*.35) calc(var(--u)*.4)}
+.seg{display:flex;gap:6px;background:#0e1416;border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);border-radius:999px;
+  padding:calc(var(--u)*.6) calc(var(--u)*.5);font-size:calc(var(--f)*.78);font-weight:600;white-space:nowrap;
+  transition:background .15s,color .15s}
+.seg button.on{background:var(--teal);color:#04211f;box-shadow:0 2px 10px rgba(63,208,201,.3)}
+.check{display:flex;align-items:center;justify-content:space-between;gap:var(--u);
+  background:#0e1416;border:1px solid var(--line);border-radius:12px;padding:calc(var(--u)*.7) calc(var(--u)*.9)}
+.check label{margin:0}
+.sw{position:relative;width:46px;height:26px;flex:0 0 auto}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:2;width:100%;height:100%}
+.sw i{position:absolute;inset:0;border-radius:999px;background:#26312f;transition:background .18s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8b9a9c;transition:transform .18s,background .18s}
+.sw input:checked + i{background:var(--teal-dim)}
+.sw input:checked + i::after{transform:translateX(20px);background:var(--teal)}
+
+/* ---------- outputs ---------- */
+.out{position:relative;flex:1;display:flex;flex-direction:column;gap:calc(var(--u)*.6);min-height:0;overflow:hidden;scrollbar-width:none}
+.out::-webkit-scrollbar{display:none}
+
+/* plain-language answer panel — diamond composition */
+.out{align-items:stretch;text-align:center}
+.out::before,.out::after{content:"";position:absolute;top:0;bottom:0;border:1px solid rgba(63,208,201,.30);border-radius:var(--r);background:linear-gradient(180deg,rgba(22,29,32,.96),rgba(15,20,22,.96));box-shadow:0 18px 44px rgba(0,0,0,.45);z-index:0;pointer-events:none}
+.out::before{right:0;width:calc((100% - var(--u)*2.2) * 0.42)}
+.out::after{left:0;width:calc((100% - var(--u)*2.2) * 0.58)}
+.prow{position:relative;z-index:1}
+.prow.r2>*,.prow.r3>*,.prow.r4>*{border-top:1px solid rgba(255,255,255,.07)}
+.hdr2>span:first-child{padding-left:calc(var(--u)*.95)}
+.hdr2{display:grid;grid-template-columns:1.45fr 1.05fr;gap:calc(var(--u)*2.2);align-items:baseline}
+.factsk{color:var(--green);padding-left:calc(var(--u)*.9)}
+.prow{display:grid;grid-template-columns:1.45fr 1.05fr;align-items:stretch;gap:calc(var(--u)*2.2);min-height:0}
+.prow.r1,.prow.r2,.prow.r3,.prow.r4{flex:1 1 0}
+.prow > :first-child{flex:1 1 auto !important;height:100%;margin:0 calc(var(--u)*.5)}
+.pc{justify-content:center}
+.pc{list-style:none;margin:0 calc(var(--u)*.5);background:none;border:0;padding:calc(var(--u)*.6) calc(var(--u)*.7) calc(var(--u)*.6) calc(var(--u)*.9);display:flex;flex-direction:column;gap:calc(var(--u)*.42);text-align:left}
+.pc li{position:relative;padding-left:1.5em;font-size:calc(var(--f)*.95);font-weight:650;line-height:1.35;color:var(--muted)}
+.pc li::before{position:absolute;left:0;top:0;font-weight:900;font-size:1.05em}
+.pc li.ok{color:var(--text)} .pc li.ok::before{content:"\2713";color:var(--green)}
+.pc li.gold{color:var(--gold);font-size:calc(var(--f)*.98);font-weight:900;letter-spacing:-.005em;margin-top:calc(var(--u)*.15);white-space:nowrap}
+.pc li.gold::before{color:var(--gold)}
+.pc li.no::before{content:"\2715";color:#ff8a7a}
+.t1{width:100%} .t2{width:100%} .t25{width:94%} .t3{width:100%} .t4{width:100%} .t5{width:84%} .t6{width:78%}
+.t1,.t2,.t3,.t4,.t5,.t6,.t25{margin-left:auto;margin-right:auto}
+.t1,.t2,.t3,.t4,.t5,.t6{margin-left:auto;margin-right:auto}
+
+.say{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.15);background:none;border:0;
+  padding:calc(var(--u)*.7) calc(var(--u)*1.1)}
+.sayt{font-size:calc(var(--f)*1);color:var(--muted);font-weight:700;line-height:1.3}
+.sayt b{color:var(--text);font-weight:700}
+.sayv{font-size:calc(var(--f)*2.2);font-weight:800;color:var(--text);letter-spacing:-.01em;white-space:nowrap;line-height:1.05}
+.sayv.sm{font-size:calc(var(--f)*2.3)}
+
+.before{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.35);background:none;border:0;
+  padding:calc(var(--u)*.7) calc(var(--u)*1)}
+.beforek{font-size:calc(var(--f)*.86);letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:800}
+.flow{display:grid;grid-template-columns:1fr 1px 1fr;align-items:end;justify-items:center;gap:calc(var(--u)*.5) calc(var(--u)*.8)}
+.fop{grid-column:1 / -1;order:2}
+.fsep{width:1px;align-self:stretch;min-height:2.6em;background:rgba(255,255,255,.22)}
+.fi{display:flex;flex-direction:column;align-items:center;gap:1px}
+.fl{font-size:calc(var(--f)*.74);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.fv{font-size:calc(var(--f)*1.95);font-weight:800;color:var(--text);line-height:1.1;white-space:nowrap}
+.fop{font-size:calc(var(--f)*.86);font-weight:800;color:#0b0f10;white-space:nowrap;
+  border-radius:999px;padding:3px calc(var(--u)*.7);background:var(--teal)}
+.nod{font-size:calc(var(--f)*.82);color:var(--muted);font-weight:600}
+
+/* deposit flow */
+.dep{flex:1.6 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.35);border:1px solid rgba(224,184,90,.4);border-radius:14px;
+  padding:calc(var(--u)*.7) calc(var(--u)*1);background:linear-gradient(180deg,rgba(224,184,90,.07),#101719)}
+.depk{font-size:calc(var(--f)*.86);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.depflow{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*.9);flex-wrap:wrap}
+.dstep{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.dsl{font-size:calc(var(--f)*.72);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700;white-space:nowrap}
+.dsv{font-size:calc(var(--f)*1.75);font-weight:800;line-height:1.1;white-space:nowrap}
+.dsv.neg{color:#ff8b7a}
+.dsv.net{color:var(--green)}
+.darrow{font-size:calc(var(--f)*1.3);color:var(--gold);font-weight:800;line-height:1}
+.depn{font-size:calc(var(--f)*.82);color:var(--muted);font-weight:600}
+
+.rec{flex:1 1 auto;min-height:0;border:0;
+  padding:calc(var(--u)*.7) calc(var(--u)*1);
+  background:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.25)}
+.recgrid{display:grid;grid-template-columns:1fr 1px 1fr;align-items:stretch;justify-items:center;gap:calc(var(--u)*1.4);width:100%;margin-top:calc(var(--u)*.4)}
+.rcell{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.15);min-width:34%}
+.rcl{font-size:calc(var(--f)*.82);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rcv{font-size:calc(var(--f)*2.7);font-weight:800;color:var(--green);line-height:1;letter-spacing:-.02em}
+.rcv.teal{color:var(--teal)}
+.rsep{width:1px;align-self:stretch;background:rgba(255,255,255,.22)}
+.reck{font-size:calc(var(--f)*1.05);letter-spacing:.08em;text-transform:uppercase;color:var(--text);font-weight:800}
+
+.opts{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr;gap:calc(var(--u)*.9)}
+.opt{background:none;border:0;border-radius:14px;
+  padding:calc(var(--u)*.7) calc(var(--u)*1);height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:calc(var(--u)*.22)}
+.ol{font-size:calc(var(--f)*.84);letter-spacing:.1em;text-transform:uppercase;color:var(--text);font-weight:800}
+.ov{font-size:calc(var(--f)*3);font-weight:800;color:var(--teal);line-height:1.05}
+.ohs{font-size:calc(var(--f)*.86);font-weight:750;color:var(--muted);line-height:1.3}
+.oh{font-size:calc(var(--f)*1.0);font-weight:800;line-height:1.35;letter-spacing:.005em;background:linear-gradient(90deg,var(--green),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.dualrow{display:flex;gap:calc(var(--u)*1.1);justify-content:center;align-items:stretch}
+.dsep{width:1px;align-self:stretch;background:linear-gradient(180deg,transparent,rgba(255,255,255,.28),transparent)}
+.dualrow>div{display:flex;flex-direction:column;align-items:center}
+.dl{font-size:calc(var(--f)*.72);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.dv{font-size:calc(var(--f)*1.8);font-weight:800;color:var(--teal);line-height:1.1}
+.dv.cash{color:var(--green)}
+
+.same{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.4);border:1px solid var(--line-soft);border-radius:14px;
+  padding:calc(var(--u)*.65) calc(var(--u)*.9);background:rgba(255,255,255,.015)}
+.samek{font-size:calc(var(--f)*.84);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.samen{font-size:calc(var(--f)*.78);color:var(--faint);line-height:1.35;max-width:94%}
+.same .mny{width:100%}
+
+.opt{position:relative}
+.tag{position:absolute;top:calc(var(--u)*-.5);left:50%;transform:translateX(-50%);
+  font-size:calc(var(--f)*.78);letter-spacing:.16em;text-transform:uppercase;font-weight:900;
+  padding:calc(var(--u)*.3) calc(var(--u)*1.2);border-radius:999px;white-space:nowrap}
+.tag.old{background:#1a1f20;border:1px solid rgba(255,255,255,.18);color:var(--muted)}
+.tag.new{background:linear-gradient(90deg,var(--green),var(--teal));border:0;color:#08110c;box-shadow:0 0 0 4px rgba(87,217,119,.14),0 6px 20px rgba(87,217,119,.35);animation:tagpulse 2.6s ease-in-out infinite}
+@keyframes tagpulse{0%,100%{box-shadow:0 0 0 4px rgba(87,217,119,.12),0 6px 20px rgba(87,217,119,.28)}50%{box-shadow:0 0 0 8px rgba(87,217,119,.06),0 8px 26px rgba(87,217,119,.5)}}
+.opt.old{border-color:rgba(255,255,255,.12)}
+.opt.old .dv{color:var(--text)} .opt.old .dv.cash{color:var(--text)}
+.opt.new{background:linear-gradient(180deg,rgba(87,217,119,.09),transparent 70%)}
+.opt.new .ov{color:var(--green)}
+
+.mny{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.9)}
+.m{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.12);
+  background:#101719;border:1px solid var(--line-soft);border-radius:14px;
+  padding:calc(var(--u)*.6) calc(var(--u)*.8)}
+.ml{font-size:calc(var(--f)*.78);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mv{font-size:calc(var(--f)*1.45);font-weight:800;white-space:nowrap}
+.mv.green{color:var(--green)}
+
+.promise{flex:0 0 auto;text-align:center;border:1px dashed rgba(63,208,201,.4);border-radius:999px;
+  padding:calc(var(--u)*.55) calc(var(--u)*1);font-size:calc(var(--f)*.88);font-weight:800;color:var(--teal);
+  background:rgba(63,208,201,.05);line-height:1.35}
+.hero{flex:1.15 1 0;border:1px solid rgba(87,217,119,.42);border-radius:14px;padding:calc(var(--u)*1.1) calc(var(--u)*1.4);
+  background:linear-gradient(135deg,rgba(87,217,119,.13),rgba(63,208,201,.05) 60%,transparent);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--u)}
+.hero .k{font-size:calc(var(--f)*.72);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.hero .v{font-size:calc(var(--f)*3.35);font-weight:800;color:var(--green);line-height:1;letter-spacing:-.02em;margin-top:4px}
+.hero .n{font-size:calc(var(--f)*.78);color:var(--muted);margin-top:4px;max-width:44ch}
+.range{flex:0 0 auto;text-align:center;border-left:1px solid rgba(148,163,184,.22);padding-left:calc(var(--u)*1.4)}
+.range .r{font-size:calc(var(--f)*1.55);font-weight:800;color:var(--teal);line-height:1}
+.range .l{font-size:calc(var(--f)*.66);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.range .tk{display:flex;align-items:baseline;gap:calc(var(--u)*.6);margin-top:6px;white-space:nowrap}
+.range .tk .now{font-size:calc(var(--f)*1.35);font-weight:700;color:var(--muted)}
+.range .tk .ar{font-size:calc(var(--f)*1);color:var(--faint)}
+.range .tk .new{font-size:calc(var(--f)*2.05);font-weight:800;color:var(--green);letter-spacing:-.02em}
+
+.band{flex:1 1 0;display:grid;grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*.9)}
+.tile{display:flex;flex-direction:column;justify-content:center;background:#101719;border:1px solid var(--line-soft);border-radius:12px;padding:calc(var(--u)*.85) calc(var(--u)*.95)}
+.tile .l{font-size:calc(var(--f)*.66);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;line-height:1.2;min-height:2.4em}
+.tile .v{font-size:calc(var(--f)*1.55);font-weight:700;margin-top:4px;letter-spacing:-.01em}
+.tile.accent{border-color:rgba(63,208,201,.45);background:linear-gradient(180deg,rgba(63,208,201,.10),#101719)}
+.tile.accent .v{color:var(--teal)}
+.tile.final{border-color:rgba(87,217,119,.45);background:linear-gradient(180deg,rgba(87,217,119,.10),#101719)}
+.tile.final .v{color:var(--green)}
+
+.stack{flex:1.25 1 0;display:flex;flex-direction:column;gap:calc(var(--u)*.75)}
+.row{flex:1 1 0;display:flex;align-items:center;justify-content:space-between;gap:var(--u);
+  background:#101719;border:1px solid var(--line-soft);border-radius:12px;padding:calc(var(--u)*.85) calc(var(--u)*1.1)}
+.row .l{font-size:calc(var(--f)*.76);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row .s{font-size:calc(var(--f)*.72);color:var(--faint);margin-top:2px}
+.row .v{font-size:calc(var(--f)*1.62);font-weight:800;letter-spacing:-.01em;text-align:right;white-space:nowrap}
+.row.cash{border-color:rgba(87,217,119,.35)} .row.cash .v{color:var(--green)}
+.row.payout{border-color:rgba(224,184,90,.35)} .row.payout .v{color:var(--gold)}
+.payout-cta{display:flex;align-items:center;gap:calc(var(--u)*.7);flex:0 0 auto}
+.arrow{color:var(--green);font-size:calc(var(--f)*1.5);line-height:1;animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.swipe{border:0;border-radius:999px;padding:calc(var(--u)*.6) calc(var(--u)*1.1);font-weight:700;
+  font-size:calc(var(--f)*.8);color:#04211f;background:linear-gradient(90deg,var(--teal),var(--green));
+  box-shadow:0 6px 18px rgba(87,217,119,.25);white-space:nowrap}
+.swipe:hover{filter:brightness(1.08)}
+
+.foot{flex:0 0 auto;margin-top:calc(var(--u)*.3);display:flex;align-items:center;justify-content:space-between;gap:var(--u);padding-top:calc(var(--u)*.4)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--muted);
+  padding:calc(var(--u)*.6) calc(var(--u)*1.1);font-size:calc(var(--f)*.78);font-weight:600}
+.ghost:hover{border-color:var(--teal);color:var(--teal)}
+.next{border:0;border-radius:999px;padding:calc(var(--u)*.68) calc(var(--u)*1.3);font-weight:700;
+  font-size:calc(var(--f)*.84);color:#04211f;background:linear-gradient(90deg,var(--teal),var(--green));
+  box-shadow:0 8px 22px rgba(63,208,201,.24)}
+.next:hover{filter:brightness(1.08)}
+.hide{display:none !important}
+
+@media (max-width:980px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100dvh}
+  .grid{grid-template-columns:1fr}
+  .band{grid-template-columns:repeat(2,1fr)}
+}
+
+/* guided 1-2-3 */
+.out{counter-reset:none}
+.stepno{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:1.9em;height:1.9em;border-radius:50%;margin-right:.5em;vertical-align:-.6em;
+  font-size:1.7em;font-weight:900;letter-spacing:0;line-height:1;
+  background:rgba(63,208,201,.14);color:var(--teal);border:1px solid rgba(63,208,201,.45)}
+.row.payout .stepno,.row.cash .stepno{background:rgba(224,184,90,.14);color:var(--gold);border-color:rgba(224,184,90,.45)}
+.steplead{display:block;font-size:.78em;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 .35em}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <a class="brand" href="https://switchtwosave.com" target="_blank" rel="noopener">
+      <svg class="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-label="Switch2Save">
+        <rect x="1.5" y="1.5" width="37" height="37" rx="11" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        <path d="M10 26.5 17 18.5 22.5 23.5 30 13.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="30" cy="13.5" r="3" fill="currentColor"/>
+      </svg>
+      <div class="wordmark big">Switch<b>2</b>Save</div>
+    </a>
+    <div class="steps">
+      <a class="step on" href="index.html"><span class="n">1</span><span class="t">Price it</span></a>
+      <span class="step-arrow">→</span>
+      <a class="step" id="navPlace" href="terminals.html"><span class="n">2</span><span class="t">Place it</span></a>
+      <span class="step-arrow">→</span>
+      <a class="step" id="navApprove" href="build.html"><span class="n">3</span><span class="t">Approve it</span></a>
+    </div>
+
+    <div class="stamp">
+      Stamped
+      <b id="stampDate">—</b>
+      <span id="stampRange">—</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ LEFT: INPUTS ============ -->
+    <section class="card pad">
+      <h2 class="ttl">Step 1 · Answer 6 questions</h2>
+      <div class="col">
+
+        <div class="qs">
+
+          <div class="q">
+            <span class="qn">1</span>
+            <div class="qb">
+              <label class="ql" for="bizName">What's the business name?</label>
+              <input type="text" id="bizName" placeholder="e.g. Harbor Diner LLC" />
+            </div>
+          </div>
+
+          <div class="qrow">
+          <div class="q">
+            <span class="qn">2</span>
+            <div class="qb">
+              <label class="ql" for="volume">How much do they run on cards each month?</label>
+              <input type="number" id="volume" value="50000" min="0" />
+            </div>
+          </div>
+          <div class="q">
+            <span class="qn">3</span>
+            <div class="qb">
+              <label class="ql" for="cashVolume">How much comes in as cash each month?</label>
+              <input type="number" id="cashVolume" value="10000" min="0" />
+            </div>
+          </div>
+          </div>
+
+
+          <div class="qrow three">
+          <div class="q">
+            <span class="qn">4</span>
+            <div class="qb">
+              <label class="ql" for="transactionCount">How many transactions per month?</label>
+              <input type="number" id="transactionCount" value="1000" min="0" />
+              <span class="qh">Used to find the average ticket.</span>
+            </div>
+          </div>
+          <div class="q">
+            <span class="qn">5</span>
+            <div class="qb">
+              <label class="ql" for="targetRate">How much are we raising prices? (%)</label>
+              <div class="p49row">
+                <input type="number" id="targetRate" value="4.9" step="0.01" />
+                <label class="p49" for="prime49"><input type="checkbox" id="prime49" checked /><span>Prime 49</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="q">
+            <span class="qn">6</span>
+            <div class="qb">
+              <label class="ql" for="currentRate">What's their rate right now? (%)</label>
+              <input type="number" id="currentRate" value="2.9" step="0.01" />
+            </div>
+          </div>
+          </div>
+
+
+        </div>
+
+        <div class="tgls">
+
+          <div class="tgwrap" id="wrapPassing">
+            <div class="tg">
+              <div><span class="tl">Already passing fees today?</span><span class="th">Leave off if this is brand new to them.</span></div>
+              <span class="sw lg"><input type="checkbox" id="isPassing" /><i></i></span>
+            </div>
+            <div class="reveal">
+              <div class="revealbody">
+                <div style="margin-bottom:calc(var(--u)*.45)">
+                  <label>Which program are they on?</label>
+                  <div class="seg wrap4" id="segProgram">
+                    <button data-prog="surcharge" class="on">Surcharging</button>
+                    <button data-prog="cashdisc">Cash discounting</button>
+                    <button data-prog="dual">Dual pricing</button>
+                    <button data-prog="admin">Admin fee</button>
+                  </div>
+                </div>
+                <div class="two" id="existingRow">
+                  <div><label for="currentPassRate">Fees passed today (%)</label><input type="number" id="currentPassRate" value="4" step="0.01" /></div>
+                  <div><label for="currentProgramCost">Current cost to merchant (%)</label><input type="number" id="currentProgramCost" value="3.84" step="0.01" /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tgwrap" id="wrapTips">
+            <div class="tg">
+              <div><span class="tl">Do they take tips on cards?</span><span class="th">Adds the tip load into the increase.</span></div>
+              <span class="sw lg"><input type="checkbox" id="takesTips" /><i></i></span>
+            </div>
+            <div class="reveal">
+              <div class="revealbody">
+                <div class="two" id="tipRow">
+                  <div>
+                    <label>Tip entry</label>
+                    <div class="seg" id="segTip">
+                      <button data-tip="percent" class="on">% of volume</button>
+                      <button data-tip="dollars">Dollars</button>
+                    </div>
+                  </div>
+                  <div><label id="tipLabel" for="tipValue">Tip % of total volume</label><input type="number" id="tipValue" value="2" step="0.01" /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="botstack">
+          <div class="same">
+            <div class="samek">Same money either way</div>
+            <div class="mny">
+              <div class="m"><span class="ml">Fees you stop eating</span><span class="mv" id="offsetVal">—</span></div>
+              <div class="m"><span class="ml" id="cashLabel">Monthly rebate</span><span class="mv green" id="cashVal">—</span></div>
+            </div>
+            <div class="samen">Identical either way — only the customer experience changes.</div>
+          </div>
+        </div>
+
+        <div class="advrow">
+          <button class="ghost sm" id="resetBtn">Reset</button>
+        </div>
+        <details class="adv">
+          <summary>Advanced settings</summary>
+          <div class="advbody">
+            <div>
+              <label for="backendRate">New cost rate to merchant (%)</label>
+              <input type="number" id="backendRate" value="4.752" step="0.001" />
+            </div>
+            <div>
+              <label for="rebateBasis">Rebate cost basis (%)</label>
+              <input type="number" id="rebateBasis" value="4.6" step="0.01" />
+            </div>
+
+            <div>
+              <label>Ticket rounding</label>
+              <div class="seg" id="segRound">
+                <button data-round="none" class="on">Exact</button>
+                <button data-round="low">Round down</button>
+                <button data-round="high">Round up</button>
+              </div>
+            </div>
+          </div>
+        </details>
+
+      </div>
+    </section>
+
+    <!-- ============ RIGHT: OUTCOMES ============ -->
+    <section class="card pad bare">
+      <h2 class="ttl hdr2"><span>Here's the answer <span id="modePill" style="color:var(--teal)">· New to program</span></span><span class="factsk">Here are the facts</span></h2>
+      <div class="out">
+
+        <div class="prow r1">
+          <div class="say t1">
+            <div class="sayt">This is your average ticket</div>
+            <div class="sayv" id="avgTicket">—</div>
+          </div>
+          <ul class="pc">
+            <li class="ok">Built from real card volume and sales count</li>
+            <li class="ok">Every number below comes off this one</li>
+          </ul>
+        </div>
+
+        <div class="prow r2">
+          <div class="before t2">
+            <div class="beforek">Here's what you're doing today</div>
+            <div class="flow">
+              <div class="fi"><span class="fl" id="lblBase">Cash price</span><span class="fv" id="basePrice">—</span></div>
+              <span class="fsep" aria-hidden="true"></span>
+            <span class="fop" id="feeOp">—</span>
+              <div class="fi"><span class="fl" id="lblToday">Card price</span><span class="fv" id="todayPrice">—</span></div>
+            </div>
+            </div>
+          <ul class="pc">
+            <li class="no" id="pcToday1">You eat the processing fee on every card sale</li>
+            <li class="no" id="pcToday2">Gone every month, nothing to show for it</li>
+            <li class="no">Your menu price is not your real price</li>
+          </ul>
+        </div>
+
+        <div class="prow r3">
+          <div class="rec t3">
+            <div class="reck">Our solution</div>
+            <div class="recgrid">
+              <div class="rcell"><span class="rcl">Price increase</span><span class="rcv" id="recRate">—</span></div>
+              <span class="rsep" aria-hidden="true"></span>
+              <div class="rcell"><span class="rcl">Per ticket</span><span class="rcv teal" id="recDollar">—</span></div>
+            </div>
+          </div>
+          <ul class="pc">
+            <li class="ok">One small move on posted prices</li>
+            <li class="ok">Covers your processing cost</li>
+            <li class="ok">A step up from where you are — not a restart</li>
+          </ul>
+        </div>
+
+        <div class="prow r4">
+          <div class="opts t4">
+            <div class="opt new">
+              <div class="tag new">The future of payments</div>
+              <div class="ov" id="optOne">—</div>
+              <div class="oh">Your new price</div>
+              <div class="ohs">Properly timed &amp; strategically structured.</div>
+            </div>
+          </div>
+          <ul class="pc">
+            <li class="ok">One posted price on everything</li>
+            <li class="ok">No signage, no compliance rules</li>
+            <li class="ok">No questions at the register</li>
+            <li class="ok">No second price to maintain</li>
+            <li class="ok gold" id="pcCashUp">—</li>
+          </ul>
+        </div>
+
+    </section>
+
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let tipMode='percent', roundMode='none', merchantType='new';
+const annual = 12, unit = 'mo';   // volume is always monthly
+
+const money = n => (Number.isFinite(n)?n:0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+const pct   = n => (Number.isFinite(n)?n:0).toFixed(2)+'%';
+const num   = n => (Number.isFinite(n)?n:0).toLocaleString('en-US',{maximumFractionDigits:2});
+
+let progMode='surcharge';
+const PROG_LABEL={surcharge:'Surcharging',cashdisc:'Cash discounting',dual:'Dual pricing',admin:'Admin fee / service charge'};
+
+function seg(container, key, cb){
+  const el = $(container);
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
+    cb(b.dataset[key]);
+  });
+}
+
+function calculate(){
+  const volume = parseFloat($('volume').value)||0;
+  const cashVolume = parseFloat($('cashVolume').value)||0;
+  const total  = volume + cashVolume;
+  const txns   = parseFloat($('transactionCount').value)||0;
+  const target = parseFloat($('targetRate').value)||0;
+  const backend= parseFloat($('backendRate').value)||0;
+  const nowRate= parseFloat($('currentRate').value)||0;
+  const passed = parseFloat($('currentPassRate').value)||0;
+  const curCost= parseFloat($('currentProgramCost').value)||0;
+  const tips   = $('takesTips').checked;
+  const tipRaw = tips ? (parseFloat($('tipValue').value)||0) : 0;
+
+  const existing = merchantType==='existing';
+
+  const tipPct = !tips ? 0 : (tipMode==='percent' ? tipRaw : (total>0 ? tipRaw/total*100 : 0));
+  const tipDollars = !tips ? 0 : (tipMode==='percent' ? total*tipRaw/100 : tipRaw);
+  const fullRate = target + tipPct;
+  const recRate  = existing ? Math.max(0, fullRate - passed) : fullRate;
+
+  // ---- the three plain-language lines ----
+  const swiped = txns>0 ? volume/txns : 0;                      // what runs through the card today
+  const base   = existing ? swiped/(1 + passed/100) : swiped;    // menu price before any fee
+
+  $('avgTicket').textContent = money(swiped);
+  const DISP = {
+    surcharge: {l:'Posted price',  r:'Charged on card', op:`${pct(passed)} surcharge added at the register`},
+    cashdisc:  {l:'Cash price',    r:'Posted price',    op:`posted price is the card price — ${pct(passed)} off for cash`},
+    dual:      {l:'Cash price',    r:'Card price',      op:`both prices posted — ${pct(passed)} apart`},
+    admin:     {l:'Menu price',    r:'Total on card',   op:`${pct(passed)} service charge added to the bill`}
+  };
+  const d = existing ? DISP[progMode] : {l:'Cash price', r:'Card price', op:`one price for everyone — you absorb ${pct(nowRate)}`};
+  $('lblBase').textContent  = d.l;
+  $('lblToday').textContent = d.r;
+  $('basePrice').textContent = money(base);
+  $('todayPrice').textContent = money(swiped);
+  $('feeOp').textContent = d.op;
+  $('pcToday1').textContent = existing
+    ? `You still eat ${pct(Math.max(0,curCost-passed))} after what you pass on`
+    : `You eat ${pct(nowRate)} on every card sale`;
+  $('pcToday2').textContent = `${money(volume*(existing?Math.max(0,curCost-passed):nowRate)/100)} a month, gone`;
+
+  // deposit flow — what actually lands in the bank
+  const feeRate = existing ? curCost : nowRate;
+  const bankFee = swiped * feeRate/100;
+  const netDep  = swiped - bankFee;
+  void netDep;
+
+  $('modePill').textContent = existing ? `· ${PROG_LABEL[progMode]} today` : '· New to program';
+  $('recRate').textContent = pct(recRate);
+
+  // ---- two ways to show it ----
+  let cardPrice = base * (1 + fullRate/100);
+  if(roundMode==='low')  cardPrice = Math.floor(cardPrice);
+  if(roundMode==='high') cardPrice = Math.ceil(cardPrice);
+
+  $('optOne').textContent  = roundMode==='none' ? money(cardPrice) : num(cardPrice);
+
+  // the increase in real dollars and cents
+  const delta = Math.max(0, cardPrice - swiped);
+  $('recDollar').textContent = `+ ${money(delta)}`;
+
+  // cash impact stack
+  const offset = volume * feeRate/100;
+  const tipCost = tips ? tipDollars * feeRate/100 : 0;
+  const cashIn  = cashVolume * target/100;   // new increase % applied to cash sales volume
+
+  $('offsetVal').textContent = `${money(offset + tipCost)} / ${unit}`;
+  const rBasis = parseFloat($('rebateBasis').value)||0;
+  const rebate = volume * Math.max(0, fullRate - rBasis)/100;
+  $('cashLabel').textContent = 'Monthly rebate';
+  $('cashVal').textContent   = `${money(rebate)} / mo`;
+  $('pcCashUp').textContent  = `Cash brings in ${money(cashIn)} more/mo`;
+}
+
+function setTips(on){
+  $('wrapTips').classList.toggle('open', on);
+  calculate();
+}
+
+const FIELDS = ['bizName','volume','cashVolume','transactionCount','targetRate','currentRate',
+  'backendRate','rebateBasis','currentPassRate','currentProgramCost','tipValue'];
+const SKEY = 's2s_price_v1';
+function saveState(){
+  try{
+    const o = {f:{}, isPassing:$('isPassing').checked, takesTips:$('takesTips').checked,
+               prime49:$('prime49').checked, progMode, roundMode, tipMode};
+    FIELDS.forEach(id => o.f[id] = $(id).value);
+    localStorage.setItem(SKEY, JSON.stringify(o));
+  }catch(e){}
+}
+function loadState(){
+  let o; try{ o = JSON.parse(localStorage.getItem(SKEY)||'null'); }catch(e){}
+  if(!o) { calculate(); return; }
+  FIELDS.forEach(id => { if(o.f && o.f[id] !== undefined) $(id).value = o.f[id]; });
+  $('prime49').checked = !!o.prime49;
+  $('takesTips').checked = !!o.takesTips;
+  $('isPassing').checked = !!o.isPassing;
+  merchantType = o.isPassing ? 'existing' : 'new';
+  $('wrapPassing').classList.toggle('open', !!o.isPassing);
+  if(o.progMode) progMode = o.progMode;
+  if(o.roundMode) roundMode = o.roundMode;
+  if(o.tipMode) tipMode = o.tipMode;
+  [['segProgram','prog',progMode],['segRound','round',roundMode],['segTip','tip',tipMode]]
+    .forEach(([id,key,val]) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset[key]===val)));
+  $('tipLabel').textContent = tipMode==='percent' ? 'Tip % of total volume' : 'Monthly tip dollars';
+  setTips(!!o.takesTips);
+}
+function reset(){
+  try{ localStorage.removeItem(SKEY); }catch(e){}
+  const d = {bizName:'',volume:50000,cashVolume:10000,transactionCount:1000,targetRate:4.9,
+             backendRate:4.752,rebateBasis:4.6,currentRate:2.9,currentPassRate:4,currentProgramCost:3.84,tipValue:2};
+  Object.entries(d).forEach(([k,v]) => $(k).value = v);
+  $('takesTips').checked = false;
+  $('isPassing').checked = false;
+  $('prime49').checked = true;
+  tipMode='percent'; roundMode='none'; merchantType='new';
+  [['segTip','tip','percent'],['segRound','round','none']]
+    .forEach(([id,key,val]) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset[key]===val)));
+  $('wrapPassing').classList.remove('open');
+  setTips(false);
+}
+
+(function init(){
+  const t = new Date();
+  $('stampDate').textContent  = t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  $('stampRange').textContent = `${t.getFullYear()}–${t.getFullYear()+10}`;
+
+  const syncRate = () => {
+    if (merchantType === 'existing') {
+      const c = parseFloat($('currentProgramCost').value);
+      if (!isNaN(c)) $('currentRate').value = c;
+    }
+  };
+  $('isPassing').addEventListener('change', e => {
+    merchantType = e.target.checked ? 'existing' : 'new';
+    $('wrapPassing').classList.toggle('open', e.target.checked);
+    syncRate();
+    calculate();
+  });
+  $('currentProgramCost').addEventListener('input', () => { syncRate(); calculate(); });
+  seg('segProgram','prog',      v => { progMode=v; syncRate(); calculate(); });
+  seg('segRound','round',       v => { roundMode=v; calculate(); });
+  seg('segTip','tip',           v => {
+    tipMode=v;
+    $('tipLabel').textContent = v==='percent' ? 'Tip % of total volume' : 'Monthly tip dollars';
+    calculate();
+  });
+
+  FIELDS.forEach(id => $(id).addEventListener('input', () => { calculate(); saveState(); }));
+  $('prime49').addEventListener('change', e => {
+    if (e.target.checked) $('targetRate').value = 4.9;
+    calculate(); saveState();
+  });
+  $('targetRate').addEventListener('input', () => {
+    $('prime49').checked = (parseFloat($('targetRate').value) === 4.9);
+    saveState();
+  });
+  ['isPassing','takesTips'].forEach(id => $(id).addEventListener('change', saveState));
+  $('segProgram').addEventListener('click', saveState);
+  $('segRound').addEventListener('click', saveState);
+  $('segTip').addEventListener('click', saveState);
+  loadState();
+
+  $('takesTips').addEventListener('change', e => setTips(e.target.checked));
+  $('resetBtn').textContent = 'Start over';
+  $('resetBtn').addEventListener('click', reset);
+  //$('nextBtn').addEventListener('click', () => { window.location.href = 'terminals.html?vol=' + (parseFloat($('volume').value)||0); });
+  function syncNav(){ const v = parseFloat($('volume').value)||0;
+    $('navPlace').href = 'terminals.html?vol=' + v; $('navApprove').href = 'build.html?vol=' + v; }
+  $('volume').addEventListener('input', syncNav); syncNav();
+  setTips(false);
+})();
+</script>
+</body>
+</html>
