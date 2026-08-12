@@ -51,13 +51,17 @@ background:var(--teal);color:#08201f;font-size:11px;font-weight:900;display:none
 .sys .nm{position:absolute;bottom:calc(var(--u)*.55);left:0;right:0;text-align:center;
 font-size:calc(var(--f)*.62);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:700}
 
-.sys .em{position:absolute;top:calc(var(--u)*.55);left:calc(var(--u)*.6);z-index:2;
-  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0e1416;
-  color:var(--muted);border-radius:999px;padding:calc(var(--u)*.35) calc(var(--u)*.75);
-  font-size:calc(var(--f)*.68);font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-  cursor:pointer;transition:border-color .15s,color .15s,background .15s}
-.sys .em:hover{border-color:var(--teal);color:var(--teal);background:rgba(63,208,201,.08)}
-.sys .em svg{width:13px;height:13px;flex:0 0 auto}
+.sys{padding-bottom:calc(var(--u)*3.6)}
+.sys .em{position:absolute;left:calc(var(--u)*.7);right:calc(var(--u)*.7);bottom:calc(var(--u)*1.85);z-index:3;
+  display:flex;align-items:center;justify-content:center;gap:8px;width:auto;
+  border:none;background:var(--teal);color:#062421;border-radius:999px;
+  padding:calc(var(--u)*.55) calc(var(--u)*1);
+  font-size:calc(var(--f)*.78);font-weight:800;letter-spacing:.03em;
+  cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.35);
+  transition:filter .15s ease, transform .15s ease}
+.sys .em:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.sys .em svg{width:15px;height:15px;flex:0 0 auto}
+.sys img{max-height:58%}
 .m-alt .emdeck{margin-left:auto;border:none;background:var(--teal);color:#062421;
   border-radius:999px;padding:calc(var(--u)*.45) calc(var(--u)*1.1);font-size:calc(var(--f)*.78);font-weight:800;cursor:pointer}
 .m-alt .emdeck:hover{filter:brightness(1.07)}
@@ -304,7 +308,7 @@ SYS.forEach(rec=>{
   const d = document.createElement('div');
   d.className = 'sys';
   d.dataset.name = name;
-  d.innerHTML = '<button type="button" class="em" title="Email this deck">'+EM_ICON+'Email</button><span class="tick">&#10003;</span><img src="logos/'+slug+'.png" alt="'+name+'" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'nologo\')"><span class="wm">'+name+'</span><span class="nm">'+name+'</span>';
+  d.innerHTML = '<button type="button" class="em" title="Email this deck">'+EM_ICON+'Email deck</button><span class="tick">&#10003;</span><img src="logos/'+slug+'.png" alt="'+name+'" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'nologo\')"><span class="wm">'+name+'</span><span class="nm">'+name+'</span>';
   d.querySelector('.em').addEventListener('click', e => emailDeck(rec, e));
   d.addEventListener('click', ()=>{
     document.querySelectorAll('.sys').forEach(s=>s.classList.remove('on'));
