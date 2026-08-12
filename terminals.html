@@ -114,6 +114,31 @@ button{font:inherit;font-weight:700;border-radius:999px;padding:calc(var(--u)*.6
 
 @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}h1{font-size:calc(var(--f)*2.4)}}
 
+
+/* ---- in-app email compose ---- */
+.emask{position:fixed;inset:0;background:rgba(6,9,12,.82);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:calc(var(--u)*2);z-index:50}
+.emask.on{display:flex}
+.ebox{width:min(440px,94vw);background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  padding:calc(var(--u)*1.4);display:flex;flex-direction:column;gap:calc(var(--u)*.9);
+  box-shadow:0 22px 50px rgba(0,0,0,.55)}
+.ebox h3{margin:0;font-size:calc(var(--f)*1.15);font-weight:800}
+.ebox .sube{margin:0;color:var(--faint);font-size:calc(var(--f)*.82);line-height:1.35}
+.ebox label{display:block;font-size:calc(var(--f)*.72);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+.ebox input,.ebox textarea{width:100%;border:1px solid var(--line);background:#0e1416;color:var(--text);
+  border-radius:10px;padding:calc(var(--u)*.7) calc(var(--u)*.85);font:inherit;outline:none}
+.ebox input:focus,.ebox textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
+.ebox textarea{min-height:88px;resize:vertical}
+.erow{display:flex;gap:calc(var(--u)*.7);justify-content:flex-end;margin-top:calc(var(--u)*.3)}
+.erow button{font:inherit;font-weight:800;border-radius:999px;padding:calc(var(--u)*.6) calc(var(--u)*1.3);cursor:pointer}
+.ecancel{border:1px solid var(--line);background:transparent;color:var(--muted)}
+.ecancel:hover{border-color:var(--teal);color:var(--teal)}
+.esend{border:none;background:var(--teal);color:#062421}
+.esend:hover{filter:brightness(1.07)}
+.esend:disabled{opacity:.55;cursor:wait;filter:none}
+.estatus{min-height:1.2em;font-size:calc(var(--f)*.8);font-weight:600}
+.estatus.ok{color:var(--teal)}
+.estatus.err{color:#ff8a7a}
 /* ---- global nav ---- */
 .nav{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*1.5);
   margin-bottom:calc(var(--u)*1.2);padding-bottom:calc(var(--u)*1);border-bottom:1px solid var(--line)}
@@ -186,6 +211,27 @@ button{font:inherit;font-weight:700;border-radius:999px;padding:calc(var(--u)*.6
     <div class="m-body" id="mBody"></div>
     <div class="m-alt" id="mAlt"></div>
   </div>
+</div>
+
+
+<div class="emask" id="emask" aria-hidden="true">
+  <form class="ebox" id="eform">
+    <h3 id="eTitle">Email deck</h3>
+    <p class="sube" id="eSub">Sends from inside the app — Gmail won’t open.</p>
+    <div>
+      <label for="eTo">Send to</label>
+      <input id="eTo" name="to" type="email" required placeholder="merchant@business.com" autocomplete="email" />
+    </div>
+    <div>
+      <label for="eNote">Note (optional)</label>
+      <textarea id="eNote" name="note" placeholder="Quick intro for the merchant…"></textarea>
+    </div>
+    <div class="estatus" id="eStatus" aria-live="polite"></div>
+    <div class="erow">
+      <button type="button" class="ecancel" id="eCancel">Cancel</button>
+      <button type="submit" class="esend" id="eSend">Send deck</button>
+    </div>
+  </form>
 </div>
 
 <script>
@@ -292,15 +338,103 @@ function deckEmail(rec){
   body += '\n— Sent from Switch2Save Place It\n';
   return {subject, body};
 }
+const EMAIL_API = localStorage.getItem('s2s_email_api') || 'https://switch2save-email.switchtwosave.workers.dev';
+let emailRec = null;
+function openEmailModal(rec){
+  emailRec = rec;
+  $('eTitle').textContent = 'Email ' + rec[1] + ' deck';
+  $('eSub').textContent = 'Sends from inside the app — nothing else opens.';
+  $('eTo').value = '';
+  $('eNote').value = '';
+  $('eStatus').textContent = '';
+  $('eStatus').className = 'estatus';
+  $('eSend').disabled = false;
+  $('emask').classList.add('on');
+  $('emask').setAttribute('aria-hidden','false');
+  setTimeout(()=>$('eTo').focus(), 30);
+}
+function closeEmailModal(){
+  $('emask').classList.remove('on');
+  $('emask').setAttribute('aria-hidden','true');
+  emailRec = null;
+}
+function deckHtml(rec, note){
+  const {subject, body} = deckEmail(rec);
+  const lines = body.split('\n');
+  let html = '<div style="font-family:Inter,Segoe UI,Arial,sans-serif;color:#122;line-height:1.5;max-width:640px">';
+  html += '<p style="font-size:16px;margin:0 0 12px">Hi,</p>';
+  if(note && note.trim()){
+    html += '<p style="font-size:15px;margin:0 0 16px;white-space:pre-wrap">'+note.trim().replace(/</g,'&lt;')+'</p>';
+  }
+  html += '<p style="font-size:15px;margin:0 0 16px">Here is the <b>'+rec[1]+'</b> deck:</p><ul style="padding-left:18px">';
+  const list = rec[5] || [];
+  if(list.length){
+    list.forEach(([label, srcs])=>{
+      html += '<li style="margin:0 0 10px"><b>'+label+'</b><br/>';
+      (srcs||[]).forEach((u,i)=>{
+        const href = absUrl(u);
+        html += '<a href="'+href+'" style="color:#0b7">'+((srcs.length>1)?('Page '+(i+1)):href)+'</a><br/>';
+      });
+      html += '</li>';
+    });
+  } else {
+    html += '<li><a href="'+BASE+rec[2]+'" style="color:#0b7">Open '+rec[1]+' resources</a></li>';
+  }
+  html += '</ul>';
+  html += '<p style="margin:18px 0 0;font-size:13px;color:#667">Resource hub: <a href="'+BASE+rec[2]+'">'+BASE+rec[2]+'</a><br/>Chooser: <a href="'+absUrl('terminals.html')+'">'+absUrl('terminals.html')+'</a></p>';
+  html += '<p style="margin:22px 0 0;font-size:12px;color:#99a">Sent from Switch2Save Place It</p></div>';
+  return {subject, text: (note&&note.trim()?note.trim()+'\n\n':'') + body, html};
+}
+async function sendDeckInApp(rec, to, note){
+  const payload = deckHtml(rec, note);
+  const res = await fetch(EMAIL_API.replace(/\/$/,'') + '/send', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      to: to.trim(),
+      systemName: rec[1],
+      subject: payload.subject,
+      text: payload.text,
+      html: payload.html
+    })
+  });
+  let data = null;
+  try { data = await res.json(); } catch(e) {}
+  if(!res.ok){
+    const msg = (data && (data.error || data.message)) || ('Send failed ('+res.status+')');
+    throw new Error(msg);
+  }
+  return data;
+}
 function emailDeck(rec, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-  const {subject, body} = deckEmail(rec);
-  const gmail = 'https://mail.google.com/mail/?view=cm&fs=1&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  const w = window.open(gmail, '_blank', 'noopener');
-  if(!w){
-    location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  }
+  openEmailModal(rec);
 }
+$('eCancel').addEventListener('click', closeEmailModal);
+$('emask').addEventListener('click', e=>{ if(e.target === $('emask')) closeEmailModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('emask').classList.contains('on')) closeEmailModal(); });
+$('eform').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!emailRec) return;
+  const to = $('eTo').value.trim();
+  if(!to){ $('eTo').focus(); return; }
+  const note = $('eNote').value;
+  const btn = $('eSend');
+  const st = $('eStatus');
+  btn.disabled = true;
+  st.className = 'estatus';
+  st.textContent = 'Sending…';
+  try{
+    await sendDeckInApp(emailRec, to, note);
+    st.className = 'estatus ok';
+    st.textContent = 'Sent to ' + to;
+    setTimeout(closeEmailModal, 900);
+  }catch(err){
+    st.className = 'estatus err';
+    st.textContent = err.message || 'Could not send';
+    btn.disabled = false;
+  }
+});
 const EM_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
 
 SYS.forEach(rec=>{
