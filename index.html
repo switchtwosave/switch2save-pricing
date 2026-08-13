@@ -132,6 +132,7 @@ input[type=text],input[type=number]{width:100%;padding:calc(var(--u)*.72) calc(v
 .sw.lg input:checked + i::after{transform:translateX(28px)}
 .p49row{display:flex;align-items:center;gap:calc(var(--u)*.5)}
 .p49row input[type=number]{flex:1 1 auto;min-width:0}
+.p49row.locked #targetRate{display:none}
 .p49{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;font-size:calc(var(--f)*.72);font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(63,208,201,.4);border-radius:999px;padding:calc(var(--u)*.28) calc(var(--u)*.6)}
 .p49 input{accent-color:var(--teal);width:14px;height:14px;margin:0}
 .advrow{display:flex;justify-content:flex-end;margin-top:calc(var(--u)*.3)}
@@ -429,8 +430,8 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
             <span class="qn">5</span>
             <div class="qb">
               <label class="ql" for="targetRate">How much are we raising prices? (%)</label>
-              <div class="p49row">
-                <input type="number" id="targetRate" value="4.9" step="0.01" />
+              <div class="p49row locked">
+                <input type="number" id="targetRate" value="5" step="0.01" />
                 <label class="p49" for="prime49"><input type="checkbox" id="prime49" checked /><span>Prime 49</span></label>
               </div>
             </div>
@@ -712,6 +713,12 @@ function setTips(on){
 const FIELDS = ['bizName','volume','cashVolume','transactionCount','targetRate','currentRate',
   'backendRate','rebateBasis','currentPassRate','currentProgramCost','tipValue'];
 const SKEY = 's2s_price_v1';
+function syncPrime49(){
+  const on = $('prime49').checked;
+  const row = $('targetRate').closest('.p49row');
+  if (row) row.classList.toggle('locked', on);
+  if (on) $('targetRate').value = 5;
+}
 function saveState(){
   try{
     const o = {f:{}, isPassing:$('isPassing').checked, takesTips:$('takesTips').checked,
@@ -722,9 +729,9 @@ function saveState(){
 }
 function loadState(){
   let o; try{ o = JSON.parse(localStorage.getItem(SKEY)||'null'); }catch(e){}
-  if(!o) { calculate(); return; }
+  if(!o) { syncPrime49(); calculate(); return; }
   FIELDS.forEach(id => { if(o.f && o.f[id] !== undefined) $(id).value = o.f[id]; });
-  $('prime49').checked = !!o.prime49;
+  $('prime49').checked = o.prime49 !== false;
   $('takesTips').checked = !!o.takesTips;
   $('isPassing').checked = !!o.isPassing;
   merchantType = o.isPassing ? 'existing' : 'new';
@@ -735,11 +742,12 @@ function loadState(){
   [['segProgram','prog',progMode],['segRound','round',roundMode],['segTip','tip',tipMode]]
     .forEach(([id,key,val]) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset[key]===val)));
   $('tipLabel').textContent = tipMode==='percent' ? 'Tip % of total volume' : 'Monthly tip dollars';
+  syncPrime49();
   setTips(!!o.takesTips);
 }
 function reset(){
   try{ localStorage.removeItem(SKEY); }catch(e){}
-  const d = {bizName:'',volume:50000,cashVolume:10000,transactionCount:1000,targetRate:4.9,
+  const d = {bizName:'',volume:50000,cashVolume:10000,transactionCount:1000,targetRate:5,
              backendRate:4.752,rebateBasis:4.6,currentRate:2.9,currentPassRate:4,currentProgramCost:3.84,tipValue:2};
   Object.entries(d).forEach(([k,v]) => $(k).value = v);
   $('takesTips').checked = false;
@@ -749,6 +757,7 @@ function reset(){
   [['segTip','tip','percent'],['segRound','round','none']]
     .forEach(([id,key,val]) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset[key]===val)));
   $('wrapPassing').classList.remove('open');
+  syncPrime49();
   setTips(false);
 }
 
@@ -779,19 +788,16 @@ function reset(){
   });
 
   FIELDS.forEach(id => $(id).addEventListener('input', () => { calculate(); saveState(); }));
-  $('prime49').addEventListener('change', e => {
-    if (e.target.checked) $('targetRate').value = 4.9;
+  $('prime49').addEventListener('change', () => {
+    syncPrime49();
     calculate(); saveState();
-  });
-  $('targetRate').addEventListener('input', () => {
-    $('prime49').checked = (parseFloat($('targetRate').value) === 4.9);
-    saveState();
   });
   ['isPassing','takesTips'].forEach(id => $(id).addEventListener('change', saveState));
   $('segProgram').addEventListener('click', saveState);
   $('segRound').addEventListener('click', saveState);
   $('segTip').addEventListener('click', saveState);
   loadState();
+  syncPrime49();
 
   $('takesTips').addEventListener('change', e => setTips(e.target.checked));
   $('resetBtn').textContent = 'Start over';
