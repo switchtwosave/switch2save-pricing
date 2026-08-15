@@ -44,6 +44,22 @@ button{cursor:pointer}
 /* ---------- shell ---------- */
 .app{height:100dvh;display:flex;flex-direction:column;padding:calc(var(--u)*1.4) calc(var(--u)*2) calc(var(--u)*1.4);gap:calc(var(--u)*1.2)}
 
+
+/* ---------- sales dashboard tabs ---------- */
+.dash{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dash a{
+  color:#fff;text-decoration:none;border-radius:9px;padding:8px 14px;
+  font-size:calc(var(--f)*.78);font-weight:600;display:inline-flex;align-items:center;gap:7px;
+  white-space:nowrap;transition:.15s;
+}
+.dash .surcharge{background:#3eb489}.dash .surcharge:hover{background:#2e9670}
+.dash .valor{background:#1e6fd6}.dash .valor:hover{background:#1857a8}
+.dash .hub{background:#e07b2e}.dash .hub:hover{background:#c0641f}
+.dash .meet{background:#00897b}.dash .meet:hover{background:#00675c}
+.dash .planner{background:#3FB653;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset}
+.dash .planner:hover{background:#2f9a43}
+.dash .review{background:#1c2430}.dash .review:hover{background:#2a3543}
+
 /* ---------- header ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*2);flex:0 0 auto}
 .brand{text-decoration:none;color:inherit;display:flex;align-items:center;gap:calc(var(--u)*1.2);min-width:0}
@@ -357,6 +373,15 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 </head>
 <body>
 <div class="app">
+
+  <nav class="dash" aria-label="STS tools">
+    <a class="surcharge" href="https://surchargereport.com/login" target="_blank" rel="noopener">📊 Surcharge Report</a>
+    <a class="valor" href="https://online.valorpaytech.com" target="_blank" rel="noopener">💳 Valor PayTech</a>
+    <a class="hub" href="https://accounts.paymentshub.com/auth/realms/nab/protocol/openid-connect/auth?client_id=agent-hub&amp;redirect_uri=https%3A%2F%2Fpartner.paymentshub.com%2F&amp;state=282023f3-63ac-41be-89b8-dc870c6f10c1&amp;response_mode=fragment&amp;response_type=code&amp;scope=openid&amp;nonce=f98ed306-0f42-4bb1-8e55-f14e65c965ad" target="_blank" rel="noopener">🏦 Payments Hub</a>
+    <a class="meet" href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmeet.google.com%2F" target="_blank" rel="noopener">🎥 Google Meet</a>
+    <a class="planner" href="index.html">📈 Price Increase Planner</a>
+    <a class="review" href="review.html">⭐ Review QR</a>
+  </nav>
 
   <header class="top">
     <a class="brand" href="https://switchtwosave.com" target="_blank" rel="noopener">

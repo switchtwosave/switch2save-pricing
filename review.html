@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Card &amp; QR Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --ink:#1e2733; --line:#e3e6ea; --muted:#8b95a1; --bar:#1c2430;
+    --bg:#eef0f2;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:0 0 60px}
+
+  /* ---------- template bar ---------- */
+  .topbar{
+    background:var(--bar);margin:22px auto 0;max-width:1180px;border-radius:14px;
+    padding:14px 22px;display:flex;align-items:center;gap:16px;
+    box-shadow:0 6px 24px rgba(15,20,28,.18);
+  }
+  .topbar .lbl{color:#9aa6b4;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  .topbar-links{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .link-btn{
+    color:#fff;text-decoration:none;border-radius:9px;padding:11px 18px;
+    font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;
+    transition:.15s;white-space:nowrap;
+  }
+  .surcharge-btn{background:#3eb489}
+  .surcharge-btn:hover{background:#2e9670}
+  .valor-btn{background:#1e6fd6}
+  .valor-btn:hover{background:#1857a8}
+  .hub-btn{background:#e07b2e}
+  .hub-btn:hover{background:#c0641f}
+  .meet-btn{background:#00897b}
+  .meet-btn:hover{background:#00675c}
+
+  .planner-btn{background:#3FB653}
+  .planner-btn:hover{background:#2f9a43}
+  @media(max-width:760px){.topbar-links{margin-left:0;width:100%}.link-btn{flex:1;justify-content:center}}
+  .tpls{display:flex;gap:8px}
+  .tpl{
+    background:#2a3543;color:#c7d0da;border:1px solid #384453;border-radius:8px;
+    padding:8px 16px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:inherit;
+    transition:.15s;
+  }
+  .tpl:hover{background:#33404f}
+  .tpl.active{background:#fff;color:#1c2430;border-color:#fff;font-weight:600}
+
+  /* ---------- shell ---------- */
+  .shell{max-width:1180px;margin:22px auto 0;padding:0 8px}
+  .stage{
+    background:#f7f8f9;border:1px solid var(--line);border-radius:18px;
+    padding:34px;display:flex;justify-content:center;
+  }
+
+  /* ---------- CARD ---------- */
+  #card{
+    background:var(--cardbg,#fff);border-radius:20px;width:820px;min-height:540px;
+    box-shadow:0 2px 34px rgba(0,0,0,.07);display:flex;overflow:hidden;position:relative;
+    border:1px solid rgba(0,0,0,.04);
+  }
+  /* left/right split */
+  .side{flex:1;padding:44px 42px;display:flex;flex-direction:column;justify-content:center}
+  .side.left{align-items:flex-start;text-align:left;gap:24px;justify-content:flex-start}
+  .side.right{align-items:center;justify-content:flex-start;position:relative}
+  .qrblock{display:flex;flex-direction:column;align-items:center}
+  .vdiv{width:1px;background:var(--line);align-self:stretch;margin:40px 0}
+
+  #card h1{
+    font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;
+    font-size:46px;line-height:1.15;color:var(--headline,#1a2b3a);letter-spacing:-.01em;
+    margin:0;
+  }
+  /* gold accent bar removed per request */
+  .accent-line{display:none}
+  .stars{display:flex;gap:7px;margin:0;height:34px;align-items:center}
+  .stars svg{width:30px;height:30px;fill:var(--star,#e0a52e);display:block;flex:none}
+  #card p.body{font-size:18px;line-height:1.55;color:var(--body,#4a5967);max-width:340px;margin:0}
+
+  /* ---------- 800x480 LANDSCAPE EXPORT CARD ---------- */
+  #exportCard{position:fixed;left:0;top:0;z-index:99999;pointer-events:none;width:800px;height:480px;
+    background:var(--cardbg,#fff);display:table;table-layout:fixed;box-sizing:border-box;overflow:hidden;}
+  #exportCard *{box-sizing:border-box}
+  #exportCard .ec-left{display:table-cell;vertical-align:middle;width:52%;padding:44px 40px;text-align:left}
+  #exportCard .ec-right{display:table-cell;vertical-align:middle;width:48%;padding:36px 40px 36px 0;text-align:center}
+  #exportCard .ec-rinner{display:block}
+  #exportCard .ec-sp{display:block;width:100%;flex:none}
+  #exportCard .ec-logo{max-height:calc(52px * var(--logo-mult,1));max-width:calc(170px * var(--logo-mult,1));object-fit:contain;display:block}
+  #exportCard h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;
+    font-size:38px;line-height:1.12;color:var(--headline,#1a2b3a);letter-spacing:-.01em;margin:0;width:100%}
+  #exportCard .ec-stars{display:flex;gap:8px;height:30px;align-items:center;justify-content:flex-start}
+  #exportCard .ec-stars svg{width:28px;height:28px;fill:var(--star,#e0a52e);display:block;flex:none}
+  #exportCard .ec-body{font-size:15px;line-height:1.5;color:var(--body,#4a5967);margin:0;max-width:340px}
+  #exportCard .ec-qrwrap{background:#fff;padding:12px;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,.09);display:inline-block}
+  #exportCard .ec-qrwrap img{display:block;width:178px;height:178px;image-rendering:pixelated}
+  #exportCard .ec-scan{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;font-size:20px;color:var(--headline,#1a2b3a);line-height:1.2;white-space:nowrap;margin:14px 0 0 0;display:block}
+  #exportCard .ec-biz{font-weight:700;font-size:calc(18px * var(--biz-mult,1));color:var(--accent,#e0a52e);line-height:1.25;margin:10px auto 0 auto;display:block;max-width:300px;min-height:46px;overflow:hidden}
+  #exportCard .ec-addr{font-size:14px;line-height:1.5;color:var(--body,#4a5967);margin:8px auto 0 auto;display:block}
+  /* Template 2 export — gold sidebar on the left cell */
+  #exportCard.et2 .ec-left{background:var(--accent,#e0a52e)}
+  #exportCard.et2 .ec-left h1{color:#fff}
+  #exportCard.et2 .ec-left .ec-body{color:rgba(255,255,255,.92)}
+  #exportCard.et2 .ec-left .ec-stars svg{fill:#fff}
+  #exportCard.et2 .ec-logo{filter:brightness(0) invert(1)}
+  /* Template 3 export — centered single column with QR beside caption */
+  #exportCard.et3{display:block}
+  #exportCard.et3 .ec-center{display:block;width:100%;height:100%;padding:40px 48px;text-align:center}
+  #exportCard.et3 .ec-logo{margin:0 auto}
+  #exportCard.et3 h1{text-align:center;font-size:34px;line-height:1.12}
+  #exportCard.et3 .ec-stars{justify-content:center}
+  #exportCard.et3 .ec-body{margin:0 auto;max-width:560px;text-align:center}
+  #exportCard.et3 .ec-qrrow{display:table;margin:0 auto;border-collapse:collapse}
+  #exportCard.et3 .ec-qrrow .ec-qrwrap{display:table-cell;vertical-align:middle}
+  #exportCard.et3 .ec-qrtext{display:table-cell;vertical-align:middle;text-align:left;padding-left:26px}
+  #exportCard.et3 .ec-scan{margin:0;text-align:left;white-space:nowrap}
+  #exportCard.et3 .ec-biz{margin:12px 0 0 0;text-align:left;max-width:280px;min-height:48px}
+  #exportCard.et3 .ec-addr{margin:6px 0 0 0;text-align:left}
+  /* Template 4 export — centered logo + name + address, NO QR */
+  #exportCard.et4{display:table;table-layout:fixed}
+  #exportCard.et4 .ec-center{display:table-cell;vertical-align:middle;width:100%;height:480px;padding:36px 50px;text-align:center}
+  #exportCard.et4 .ec-logo{margin:0 auto;max-height:calc(120px * var(--logo-mult,1));max-width:calc(300px * var(--logo-mult,1))}
+  #exportCard.et4 h1{text-align:center;font-size:calc(34px * var(--h-mult,1));line-height:1.12;margin:0;width:100%}
+  #exportCard.et4 .ec-biz{display:block;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:calc(28px * var(--biz-mult,1));color:var(--accent,#e0a52e);text-align:center;max-width:100%;min-height:0;overflow:visible;line-height:1.2;margin:0}
+  #exportCard.et4 .ec-addr{display:block;text-align:center;font-size:calc(17px * var(--addr-mult,1));line-height:1.65;margin:0 auto;max-width:100%;white-space:normal}
+  #exportCard.et4 .ec-addr br{display:block}
+  .qrwrap{background:#fff;padding:14px;border-radius:16px;box-shadow:0 2px 20px rgba(0,0,0,.09);}
+  .qrwrap img{display:block;width:200px;height:200px;image-rendering:pixelated}
+  .scan{padding-top:16px;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;color:var(--headline,#1a2b3a);text-align:center;white-space:nowrap}
+  .biz{padding-top:14px;padding-bottom:22px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:calc(18px * var(--biz-mult,1));color:var(--accent,#e0a52e);text-align:center;line-height:1.3;max-width:280px}
+  .addr{font-size:12.5px;color:var(--body,#4a5967);text-align:center;line-height:1.6}
+  .biz:empty,.addr:empty{display:none}
+  .t4biz,.t4addr{display:none}
+  .card-logo{max-width:150px;max-height:80px;object-fit:contain;margin-bottom:22px;display:none}
+  .card-logo-bottom{max-width:150px;max-height:70px;object-fit:contain;margin-top:26px;display:none}
+  /* Template 1 — optional logo shows BELOW the body text (only when a logo exists) */
+  #card.t1.has-logo .card-logo-bottom{display:block}
+
+  /* template 2 — sidebar logo (logo in a colored left rail) */
+  #card.t2 .side.left{background:var(--accent,#e0a52e);color:#fff}
+  #card.t2 .side.left h1{color:#fff}
+  #card.t2 .side.left p.body{color:rgba(255,255,255,.92)}
+  #card.t2 .accent-line{background:#fff}
+  #card.t2 .stars svg{fill:var(--star,#fff)}
+  #card.t2 .card-logo{display:block;filter:brightness(0) invert(1)}
+
+  /* template 3 — logo card (centered logo above headline, single column) */
+  #card.t3{flex-direction:column;align-items:center;text-align:center;padding:46px}
+  #card.t3 .side{padding:0;align-items:center;text-align:center}
+  #card.t3 .vdiv{display:none}
+  #card.t3 .side.left{margin-bottom:28px}
+  #card.t3 .card-logo{display:block}
+  #card.t3 h1{font-size:42px}
+  #card.t3 .stars{justify-content:center}
+  #card.t3 p.body{text-align:center;max-width:420px}
+
+  /* template 4 — logo + name + address, NO QR / NO stars */
+  #card.t4{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px}
+  #card.t4 .side{padding:0;align-items:center;text-align:center}
+  #card.t4 .vdiv,#card.t4 .side.right{display:none}
+  #card.t4 .stars,#card.t4 p.body,#card.t4 .card-logo-bottom{display:none}
+  #card.t4 .side.left{gap:22px;align-items:center}
+  #card.t4 .card-logo{display:block;max-width:220px;max-height:120px;margin-bottom:6px}
+  #card.t4 h1{font-size:calc(44px * var(--h-mult,1));color:var(--headline,#1a2b3a)}
+  #card.t4 .t4biz{display:block;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:calc(30px * var(--biz-mult,1));color:var(--accent,#e0a52e);line-height:1.25;margin-top:4px}
+  #card.t4 .t4biz:empty{display:none}
+  #card.t4 .t4addr{display:block;font-size:calc(17px * var(--addr-mult,1));line-height:1.7;color:var(--body,#4a5967)}
+  #card.t4 .t4addr:empty{display:none}
+
+  /* ---------- FORM ---------- */
+  .form{max-width:1180px;margin:0 auto;padding:26px 8px 0}
+  .row{display:flex;gap:22px;margin-bottom:20px}
+  .fld{flex:1;display:flex;flex-direction:column}
+  label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  input[type=text],textarea{
+    font-family:inherit;font-size:15px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:9px;padding:12px 14px;width:100%;resize:vertical;
+  }
+  input[type=text]:focus,textarea:focus{outline:none;border-color:#9fb4c8;box-shadow:0 0 0 3px rgba(30,140,200,.08)}
+  textarea{min-height:60px;line-height:1.5}
+
+  .drop{
+    border:2px dashed #cfd6dd;border-radius:11px;padding:20px;text-align:center;cursor:pointer;
+    background:#fff;transition:.15s;
+  }
+  .drop:hover{border-color:#9fb4c8;background:#fafbfc}
+  .drop .d1{font-size:14.5px;font-weight:600;color:#4a5967}
+  .drop .d2{font-size:12px;color:var(--muted);margin-top:4px}
+  .drop img.prev{max-height:46px;margin-bottom:8px}
+
+  .urlbar{
+    background:#eef7ef;border:1px solid #cfe6d2;border-radius:8px;color:#2f6b3a;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+    padding:10px 13px;margin-top:9px;word-break:break-all;
+  }
+
+  /* colors */
+  .colors-head{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 0 16px}
+  .colgrid{display:flex;gap:60px;flex-wrap:wrap}
+  .colcol{display:flex;flex-direction:column;gap:16px}
+  .swrow label{margin-bottom:9px}
+  .sw{display:flex;gap:9px;flex-wrap:wrap;max-width:360px}
+  .dot{
+    width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid #fff;
+    box-shadow:0 0 0 1px #d0d6dc;transition:.12s;position:relative;
+  }
+  .dot:hover{transform:scale(1.12)}
+  .dot.on{box-shadow:0 0 0 2px #1c2430}
+  .dot.custom{background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);display:flex;align-items:center;justify-content:center}
+  .dot.custom input{opacity:0;width:100%;height:100%;cursor:pointer}
+
+  /* action bar */
+  .actions{display:flex;justify-content:space-between;align-items:center;margin-top:30px}
+  .ghost{
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px 20px;
+    font-family:inherit;font-size:14px;font-weight:500;color:#3a4653;cursor:pointer;transition:.15s;
+  }
+  .ghost:hover{background:#f2f4f6}
+  .primary{
+    background:var(--bar);color:#fff;border:none;border-radius:9px;padding:13px 26px;
+    font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;
+    display:inline-flex;gap:9px;align-items:center;
+  }
+  .primary:hover{background:#12181f}
+  .dlmenu{display:flex;gap:10px}
+
+  .hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:26px}
+  .hint a{color:#1e8cc8;text-decoration:none;font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- TEMPLATE BAR -->
+<div class="topbar">
+  <span class="lbl">Template:</span>
+  <div class="tpls">
+    <button class="tpl active" data-t="1">1 — White &amp; Text</button>
+    <button class="tpl" data-t="2">2 — Sidebar Logo</button>
+    <button class="tpl" data-t="3">3 — Logo Card</button>
+    <button class="tpl" data-t="4">4 — Logo + Info (No QR)</button>
+  </div>
+  <div class="topbar-links">
+    <a class="link-btn surcharge-btn" href="https://surchargereport.com/login" target="_blank" rel="noopener">📊 Surcharge Report</a>
+    <a class="link-btn valor-btn" href="https://online.valorpaytech.com" target="_blank" rel="noopener">💳 Valor PayTech</a>
+    <a class="link-btn hub-btn" href="https://accounts.paymentshub.com/auth/realms/nab/protocol/openid-connect/auth?client_id=agent-hub&amp;redirect_uri=https%3A%2F%2Fpartner.paymentshub.com%2F&amp;state=282023f3-63ac-41be-89b8-dc870c6f10c1&amp;response_mode=fragment&amp;response_type=code&amp;scope=openid&amp;nonce=f98ed306-0f42-4bb1-8e55-f14e65c965ad" target="_blank" rel="noopener">🏦 Payments Hub</a>
+    <a class="link-btn meet-btn" href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmeet.google.com%2F" target="_blank" rel="noopener">🎥 Google Meet</a>
+    <a class="link-btn planner-btn" href="index.html">📈 Price Increase Planner</a>
+  </div>
+</div>
+
+<!-- CARD PREVIEW -->
+<div class="shell">
+  <div class="stage">
+    <div id="card" class="t1">
+      <div class="side left">
+        <img id="cardLogo" class="card-logo" alt="logo">
+        <h1 id="cH">Thank You for Your Visit!</h1>
+        <div class="stars">
+          <svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>
+          <svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>
+          <svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>
+          <svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>
+          <svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>
+        </div>
+        <p class="body" id="cB">We truly value your feedback. Your review helps other families in Santa Clarita find the care they deserve.</p>
+        <div class="t4biz" id="cBiz4">Valencia Dental Smiles</div>
+        <div class="t4addr" id="cAddr4">23310 Cinema Dr, Suite 103<br>Valencia, CA 91355</div>
+        <img id="cardLogoBottom" class="card-logo-bottom" alt="logo">
+      </div>
+      <div class="vdiv"></div>
+      <div class="side right">
+        <div class="qrblock">
+          <div class="qrwrap"><img id="qrImg" alt="QR"></div>
+          <div class="scan">Scan to Review Us!</div>
+          <div class="biz" id="cBiz">Valencia Dental Smiles</div>
+          <div class="addr" id="cAddr">23310 Cinema Dr, Suite 103<br>Valencia, CA 91355</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="form">
+  <div class="row">
+    <div class="fld"><label>Headline 1</label><input type="text" id="h1" value="Thank You for"></div>
+    <div class="fld"><label>Headline 2</label><input type="text" id="h2" value="Your Visit!"></div>
+  </div>
+
+  <div class="row">
+    <div class="fld"><label>Business Name (shows on card + search rotation)</label><input type="text" id="bizName" value="Valencia Dental Smiles"></div>
+    <div class="fld"><label>City (auto-fills body)</label><input type="text" id="city" value="Santa Clarita"></div>
+  </div>
+
+  <div class="row">
+    <div class="fld"><label>Address (shows on card)</label><input type="text" id="addr" value="23310 Cinema Dr, Suite 103, Valencia, CA 91355"></div>
+  </div>
+
+  <div class="row">
+    <div class="fld"><label>Body Text</label>
+      <textarea id="body">We truly value your feedback. Your review helps other families in Santa Clarita find the care they deserve.</textarea>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label>Logo optional — shows below body text</label>
+      <div class="drop" id="drop">
+        <img class="prev" id="logoPrev" style="display:none">
+        <div class="d1" id="dropTitle">🖼️ Drop logo or click — optional</div>
+        <div class="d2">Leave empty to skip · PNG · JPG · WebP</div>
+      </div>
+      <input type="file" id="logoFile" accept="image/*" hidden>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label>Logo size <span id="logoSzVal" style="color:#3a4653">100%</span></label>
+      <input type="range" id="logoSz" min="40" max="220" value="100" step="5">
+    </div>
+    <div class="fld">
+      <label>Business name size <span id="bizSzVal" style="color:#3a4653">100%</span></label>
+      <input type="range" id="bizSz" min="50" max="220" value="100" step="5">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label>Address size <span id="addrSzVal" style="color:#3a4653">100%</span></label>
+      <input type="range" id="addrSz" min="60" max="220" value="100" step="5">
+    </div>
+    <div class="fld">
+      <label>Headline size <span id="hSzVal" style="color:#3a4653">100%</span></label>
+      <input type="range" id="hSz" min="60" max="180" value="100" step="5">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label>Google Review Link</label>
+      <input type="text" id="url" placeholder="https://valenciadentalsmiles.netlify.app">
+      <div class="urlbar" id="urlBar">Paste your hosted Netlify (or g.page) link above — the QR will point here.</div>
+    </div>
+  </div>
+
+  <!-- COLORS -->
+  <div class="colors-head">Colors</div>
+  <div class="colgrid">
+    <div class="colcol">
+      <div class="swrow"><label>Background</label><div class="sw" data-var="cardbg"></div></div>
+      <div class="swrow"><label>Accent (line / name)</label><div class="sw" data-var="accent"></div></div>
+      <div class="swrow"><label>Stars</label><div class="sw" data-var="star"></div></div>
+    </div>
+    <div class="colcol">
+      <div class="swrow"><label>Headline</label><div class="sw" data-var="headline"></div></div>
+      <div class="swrow"><label>Body Text</label><div class="sw" data-var="body"></div></div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="ghost" id="newqr">↻ New QR — clear name, address &amp; code</button>
+    <div class="dlmenu">
+      <button class="ghost" id="dlhtml">↓ Redirect HTML</button>
+      <button class="primary" id="dljpg">↓ Download JPG (800×480)</button>
+    </div>
+  </div>
+
+  <div class="hint">Host the downloaded <code>index.html</code> on the merchant's own free <a href="https://app.netlify.com/drop" target="_blank">Netlify</a> account so the link stays theirs. The QR points to that URL; the page rotates to a new Google search on every scan.</div>
+</div>
+
+<script>
+/* ---------- palettes for swatch rows ---------- */
+const SW = {
+  cardbg:   ['#ffffff','#f0f7fb','#faf6ef','#0f1b2a','#101010','#000000','#1a2b3a','#123a2e','#2a1a3a','#fff4e6','#d6f5e8'],
+  accent:   ['#e0a52e','#f5c242','#1e6fd6','#7ec8f0','#2f8f4e','#d33b3b','#8e44ad','#e07b2e','#0f9e9e','#c0392b','#3eb489'],
+  star:     ['#e0a52e','#f5c242','#f5b301','#ffd700','#1e6fd6','#7ec8f0','#2f8f4e','#d33b3b','#8e44ad','#111111','#3eb489'],
+  headline: ['#1a2b3a','#000000','#111111','#1e6fd6','#7ec8f0','#2f8f4e','#c0392b','#8e44ad','#e0a52e','#ffffff','#2e8b6b'],
+  body:     ['#4a5967','#5a6470','#6b7280','#7ec8f0','#333333','#111111','#1a2b3a','#2f6b3a','#7a5c3a','#ffffff','#3d8f74'],
+};
+const VARS = {cardbg:'--cardbg',accent:'--accent',star:'--star',headline:'--headline',body:'--body'};
+const STATE = {cardbg:'#ffffff',accent:'#e0a52e',star:'#e0a52e',headline:'#1a2b3a',body:'#4a5967',logo:null,template:1,logoScale:1,bizScale:1,addrScale:1,hScale:1};
+
+/* build swatch dots */
+document.querySelectorAll('.sw').forEach(row=>{
+  const key=row.dataset.var;
+  SW[key].forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===0?' on':'');
+    d.style.background=c;
+    d.dataset.c=c;
+    d.onclick=()=>{setColor(key,c);row.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));d.classList.add('on');};
+    row.appendChild(d);
+  });
+  // custom picker dot
+  const cust=document.createElement('label');
+  cust.className='dot custom';
+  const inp=document.createElement('input');inp.type='color';inp.value=STATE[key];
+  inp.oninput=e=>{setColor(key,e.target.value);row.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));cust.classList.add('on');};
+  cust.appendChild(inp);row.appendChild(cust);
+});
+function setColor(key,c){STATE[key]=c;document.getElementById('card').style.setProperty(VARS[key],c);}
+
+/* ---------- template switch ---------- */
+document.querySelectorAll('.tpl').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tpl').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    STATE.template=+b.dataset.t;
+    const card=document.getElementById('card');
+    card.className='t'+STATE.template;
+    // reapply css vars (className reset wipes inline? no—inline persists) 
+  };
+});
+
+/* ---------- text bindings ---------- */
+const $=id=>document.getElementById(id);
+/* Format a US address into uniform lines:
+   line 1 = street (+ suite/unit if present on same segment)
+   middle = any extra segments (e.g. building name)
+   last   = "City, ST ZIP"  (city + state + zip combined on ONE line) */
+function formatAddress(raw){
+  const parts = (raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!parts.length) return '';
+  const zipRe = /\b\d{5}(?:-\d{4})?\b/;
+  const stateRe = /^[A-Za-z]{2}$/;
+  const lines = [];
+  // Detect trailing "City, ST ZIP" pattern from the last 1-3 segments
+  const last = parts[parts.length-1] || '';
+  // Case A: last segment already like "CA 91355" and the one before is the city
+  if(zipRe.test(last) && parts.length>=2){
+    const cityStateZip = last;               // e.g. "CA 91355" or "Valencia CA 91355"
+    // if the zip segment is only "ST ZIP", pull the city from the previous segment
+    if(/^[A-Za-z]{2}\s+\d{5}(?:-\d{4})?$/.test(cityStateZip)){
+      const city = parts[parts.length-2];
+      const head = parts.slice(0, parts.length-2);
+      head.forEach(h=>lines.push(h));
+      lines.push(`${city}, ${cityStateZip}`);
+    } else {
+      // last segment already contains city+state+zip
+      const head = parts.slice(0, parts.length-1);
+      head.forEach(h=>lines.push(h));
+      lines.push(cityStateZip);
+    }
+  } else {
+    // Fallback: just use segments as-is
+    parts.forEach(p=>lines.push(p));
+  }
+  return lines.map(l=>l.replace(/\s+/g,' ')).join('<br>');
+}
+function syncText(){
+  $('cH').textContent = ($('h1').value+' '+$('h2').value).trim();
+  $('cB').textContent = $('body').value;
+  $('cBiz').textContent = $('bizName').value.trim();
+  const addrHTML = formatAddress($('addr').value);
+  $('cAddr').innerHTML = addrHTML;
+  // Template 4 mirrors name + address
+  if($('cBiz4')) $('cBiz4').textContent = $('bizName').value.trim();
+  if($('cAddr4')) $('cAddr4').innerHTML = addrHTML;
+}
+['h1','h2','body','bizName','addr'].forEach(id=>$(id).addEventListener('input',syncText));
+/* ---------- size scaling (logo + business name) ---------- */
+function applyScales(){
+  const card=$('card');
+  const ls=STATE.logoScale, bs=STATE.bizScale;
+  // scale every logo img on the live card
+  ['cardLogo','cardLogoBottom'].forEach(id=>{const el=$(id);if(el)el.style.transform=`scale(${ls})`;});
+  // font scales via CSS multipliers (each context keeps its own base size)
+  card.style.setProperty('--biz-mult', bs);
+  card.style.setProperty('--addr-mult', STATE.addrScale);
+  card.style.setProperty('--h-mult', STATE.hScale);
+}
+function setLogoScaleBase(){
+  // ensure transform-origin keeps logos anchored nicely
+  ['cardLogo','cardLogoBottom'].forEach(id=>{const el=$(id);if(el)el.style.transformOrigin='center';});
+}
+setLogoScaleBase();
+$('logoSz').addEventListener('input',e=>{
+  STATE.logoScale=+e.target.value/100;
+  $('logoSzVal').textContent=e.target.value+'%';
+  applyScales();
+});
+$('bizSz').addEventListener('input',e=>{
+  STATE.bizScale=+e.target.value/100;
+  $('bizSzVal').textContent=e.target.value+'%';
+  applyScales();
+});
+$('addrSz').addEventListener('input',e=>{
+  STATE.addrScale=+e.target.value/100;
+  $('addrSzVal').textContent=e.target.value+'%';
+  applyScales();
+});
+$('hSz').addEventListener('input',e=>{
+  STATE.hScale=+e.target.value/100;
+  $('hSzVal').textContent=e.target.value+'%';
+  applyScales();
+});
+$('city').addEventListener('input',()=>{
+  const c=$('city').value.trim()||'your area';
+  $('body').value=`We truly value your feedback. Your review helps other families in ${c} find the care they deserve.`;
+  syncText();
+});
+
+/* ---------- logo ---------- */
+$('drop').onclick=()=>$('logoFile').click();
+$('logoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{STATE.logo=ev.target.result;showLogo();};r.readAsDataURL(f);};
+$('drop').ondragover=e=>{e.preventDefault();};
+$('drop').ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{STATE.logo=ev.target.result;showLogo();};r.readAsDataURL(f);};
+function showLogo(){
+  $('logoPrev').src=STATE.logo;$('logoPrev').style.display='inline-block';
+  $('dropTitle').textContent='Logo added — click to replace';
+  $('cardLogo').src=STATE.logo;
+  $('cardLogoBottom').src=STATE.logo;
+  $('card').classList.add('has-logo');
+}
+
+/* ---------- QR + query rotation ---------- */
+function slugify(s){return (s||'card').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function makeQR(url){
+  const qr=qrcode(0,'M');qr.addData(url);qr.make();
+  $('qrImg').src=qr.createDataURL(8,4);
+}
+function normalizeURL(u){
+  u=u.trim();
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u='https://'+u;
+  return u;
+}
+function currentURL(){return normalizeURL($('url').value);}
+function refreshURL(){
+  const u=currentURL();
+  const bar=$('urlBar');
+  if(u){
+    bar.textContent=u;bar.style.color='#2f6b3a';bar.style.background='#eef7ef';bar.style.borderColor='#cfe6d2';
+    makeQR(u);
+  } else {
+    bar.textContent='Paste your hosted Netlify (or g.page) link above — the QR will point here.';
+    bar.style.color='#8b95a1';bar.style.background='#fff';bar.style.borderColor='#e3e6ea';
+  }
+}
+$('url').addEventListener('input',refreshURL);
+// New QR = wipe ONLY the QR code, business name and address. Everything else (headlines,
+// body text, logo, colors, template) stays exactly as-is.
+$('newqr').onclick=()=>{
+  // clear business name, address, and the review URL
+  ['bizName','addr','url'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  // blank the QR
+  const q=$('qrImg'); if(q)q.removeAttribute('src');
+  // reset the green url bar to its prompt
+  const bar=$('urlBar');
+  if(bar){bar.textContent='Paste your hosted Netlify (or g.page) link above — the QR will point here.';bar.style.color='';bar.style.background='';bar.style.borderColor='';}
+  // clear the name + address on the live card (keep headline/body/logo)
+  const cBiz=$('cBiz'); if(cBiz)cBiz.textContent='';
+  const cAddr=$('cAddr'); if(cAddr)cAddr.innerHTML='';
+  // focus the business name field so you can type the next merchant
+  const nf=$('bizName'); if(nf){nf.scrollIntoView({behavior:'smooth',block:'center'});nf.focus();}
+};
+
+/* ---------- build rotating redirect HTML for download ---------- */
+function buildQueries(){
+  const biz = ($('h1').value+' '+$('h2').value).trim();
+  const city=$('city').value.trim();
+  const name = ($('bizName').value||'').trim();
+  return [
+    `${name} ${city}`.trim(),
+    `${name} reviews`.trim(),
+    `${name} google reviews`.trim(),
+    `${name} ${city} reviews`.trim(),
+    `dentist ${city} ${name}`.trim(),
+    `${name} family dentist ${city}`.trim(),
+    `${name} cosmetic dentist ${city}`.trim(),
+    `best dentist ${city} ${name}`.trim(),
+    `${name} near me`.trim(),
+    `${name} appointment ${city}`.trim(),
+  ].filter(Boolean);
+}
+function redirectHTML(){
+  const q=JSON.stringify(buildQueries());
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Redirecting…</title><style>body{font-family:system-ui,sans-serif;background:#f0f7fb;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#1a3a4a}</style></head><body><div>Redirecting…</div><script>
+var Q=${q};
+var idx=Math.floor(Date.now()/400)%Q.length;
+var last=sessionStorage.getItem('lastq');
+if(last!=null){idx=(parseInt(last)+1+Math.floor(Math.random()*(Q.length-1)))%Q.length;}
+sessionStorage.setItem('lastq',idx);
+location.replace('https://www.google.com/search?q='+encodeURIComponent(Q[idx]));
+<\/script></body></html>`;
+}
+
+/* ---------- downloads ---------- */
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+function dataURLtoBlob(dataurl){
+  const arr=dataurl.split(',');const mime=arr[0].match(/:(.*?);/)[1];
+  const bstr=atob(arr[1]);let n=bstr.length;const u8=new Uint8Array(n);
+  while(n--)u8[n]=bstr.charCodeAt(n);
+  return new Blob([u8],{type:mime});
+}
+$('dlhtml').onclick=()=>{download('index.html',new Blob([redirectHTML()],{type:'text/html'}));};
+// export target: 480 x 800 portrait, filled edge-to-edge, to fit the customer-facing display
+const STAR_SVG='<svg viewBox="0 0 20 20"><polygon points="10,1 12.9,7 19.5,7.6 14.5,12 16.2,18.5 10,15 3.8,18.5 5.5,12 0.5,7.6 7.1,7"/></svg>';
+// build a fresh 480x800 portrait card from the current live values
+function buildExportCard(){
+  const old=$('exportCard'); if(old) old.remove();
+  const ec=document.createElement('div'); ec.id='exportCard';
+  const tpl=STATE.template||1;
+  ec.className='et'+tpl;
+  // Apply the user's live color choices onto the export card so the download
+  // matches the on-screen preview (variables are set on #card, not on body).
+  if(STATE.cardbg) ec.style.setProperty('--cardbg',STATE.cardbg);
+  if(STATE.accent) ec.style.setProperty('--accent',STATE.accent);
+  if(STATE.star) ec.style.setProperty('--star',STATE.star);
+  if(STATE.headline) ec.style.setProperty('--headline',STATE.headline);
+  if(STATE.body) ec.style.setProperty('--body',STATE.body);
+  // carry the logo + font size scaling into the export
+  ec.style.setProperty('--logo-mult', STATE.logoScale||1);
+  ec.style.setProperty('--biz-mult', STATE.bizScale||1);
+  ec.style.setProperty('--addr-mult', STATE.addrScale||1);
+  ec.style.setProperty('--h-mult', STATE.hScale||1);
+  const logoSrc=STATE.logo;
+  const logoHTML=logoSrc?`<img class="ec-logo" src="${logoSrc}">`:'';
+  const qrSrc=$('qrImg').getAttribute('src')||'';
+  const sp=(h)=>`<div class="ec-sp" style="height:${h}px"></div>`;
+  const rightHTML=`<div class="ec-right"><div class="ec-rinner">
+      <div class="ec-qrwrap"><img src="${qrSrc}"></div>
+      <p class="ec-scan">Scan to Review Us!</p>
+      <p class="ec-biz">${$('cBiz').innerHTML}</p>
+      <p class="ec-addr">${$('cAddr').innerHTML}</p>
+    </div></div>`;
+  if(tpl===4){
+    // Template 4 — centered logo + name + address, NO QR / NO stars.
+    // Uses explicit spacer divs (html-to-image collapses flex gap / margins).
+    ec.innerHTML=`<div class="ec-center">
+      ${logoHTML?logoHTML+sp(22):''}
+      <h1>${$('cH').innerHTML}</h1>
+      ${sp(20)}
+      <div class="ec-biz">${$('cBiz').innerHTML}</div>
+      ${sp(18)}
+      <div class="ec-addr">${$('cAddr').innerHTML}</div>
+    </div>`;
+  } else if(tpl===3){
+    // Template 3 — centered single column: logo, headline, stars, body, QR block
+    ec.innerHTML=`<div class="ec-center">
+      ${logoHTML?logoHTML+sp(14):''}
+      <h1>${$('cH').innerHTML}</h1>
+      ${sp(16)}
+      <div class="ec-stars">${STAR_SVG.repeat(5)}</div>
+      ${sp(16)}
+      <p class="ec-body">${$('cB').innerHTML}</p>
+      ${sp(20)}
+      <div class="ec-qrrow">
+        <div class="ec-qrwrap"><img src="${qrSrc}"></div>
+        <div class="ec-qrtext">
+          <p class="ec-scan">Scan to Review Us!</p>
+          <p class="ec-biz">${$('cBiz').innerHTML}</p>
+          <p class="ec-addr">${$('cAddr').innerHTML}</p>
+        </div>
+      </div>
+    </div>`;
+  } else if(tpl===2){
+    // Template 2 — gold sidebar: logo at TOP of the colored left rail
+    ec.innerHTML=`
+      <div class="ec-left">
+        ${logoHTML?logoHTML+sp(16):''}
+        <h1>${$('cH').innerHTML}</h1>
+        ${sp(20)}
+        <div class="ec-stars">${STAR_SVG.repeat(5)}</div>
+        ${sp(20)}
+        <p class="ec-body">${$('cB').innerHTML}</p>
+      </div>
+      ${rightHTML}`;
+  } else {
+    // Template 1 — white: optional logo BELOW the body text
+    ec.innerHTML=`
+      <div class="ec-left">
+        <h1>${$('cH').innerHTML}</h1>
+        ${sp(20)}
+        <div class="ec-stars">${STAR_SVG.repeat(5)}</div>
+        ${sp(20)}
+        <p class="ec-body">${$('cB').innerHTML}</p>
+        ${logoHTML?sp(24)+logoHTML:''}
+      </div>
+      ${rightHTML}`;
+  }
+  document.body.appendChild(ec);
+  return ec;
+}
+$('dljpg').onclick=async()=>{
+  const btn=$('dljpg');const orig=btn.textContent;btn.textContent='Rendering…';btn.disabled=true;
+  let node=null;
+  const skipEmpty=(el)=>{
+    if(el.tagName==='IMG'){const s=el.getAttribute('src');if(!s||s.trim()==='')return false;}
+    return true;
+  };
+  try{
+    // Template 4 has no QR, so only require a QR for templates 1–3
+    if((STATE.template||1)!==4){
+      const qrReady=($('qrImg').getAttribute('src')||'').startsWith('data:');
+      if(!qrReady){alert('Please enter the Google Review Link first so the QR code is generated, then download.');btn.textContent=orig;btn.disabled=false;return;}
+    }
+    if(document.fonts&&document.fonts.ready){await document.fonts.ready;}
+    node=buildExportCard();
+    // wait for every image in the export card (QR + logo data-URIs) to fully decode
+    await Promise.all([...node.querySelectorAll('img')].map(img=>{
+      if(img.complete && img.naturalWidth>0) return Promise.resolve();
+      return (img.decode ? img.decode().catch(()=>{}) : new Promise(res=>{img.onload=img.onerror=res;}));
+    }));
+    await new Promise(r=>setTimeout(r,150)); // let layout settle
+    // exact 800x480 landscape output at 2x device pixels
+    const opts={quality:0.95,pixelRatio:2,backgroundColor:STATE.cardbg||'#ffffff',filter:skipEmpty};
+    const dataUrl=await htmlToImage.toJpeg(node,opts);
+    if(!dataUrl||dataUrl.length<2000) throw new Error('empty render');
+    // unique, filesystem-safe filename (timestamp avoids the browser appending " (9)",
+    // whose parentheses/space trip "unsafe filename" checks on some upload targets)
+    const base=(slugify($('cBiz').textContent)||slugify($('cH').textContent)||'review-card');
+    const d=new Date();const pad=n=>String(n).padStart(2,'0');
+    const stamp=`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    const safeName=`${base}-800x480-${stamp}.jpg`.replace(/[^a-zA-Z0-9._-]/g,'-');
+    download(safeName,dataURLtoBlob(dataUrl));
+  }catch(err){
+    console.error('JPG export failed:',err);
+    alert('Download failed — please try again. ('+(err&&err.message||err)+')');
+  }finally{
+    if(node) node.remove();
+    btn.textContent=orig;btn.disabled=false;
+  }
+};
+
+/* ---------- init ---------- */
+// show a placeholder QR immediately using the placeholder URL
+makeQR('https://valenciadentalsmiles.netlify.app');
+refreshURL();
+syncText();
+</script>
+</body>
+</html>
