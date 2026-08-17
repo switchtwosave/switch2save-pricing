@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Care Payments</title>
+<meta name="robots" content="noindex">
+</head>
+<body style="font-family:Arial,sans-serif;background:#0e1a33;color:#fff;text-align:center;padding:48px;">
+<p>One moment.</p>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var who = q.get("who") || "unknown";
+  var src = q.get("src") || "email";
+  var dest = q.get("to") || "https://carepaymentsgroup.com/";
+  try { dest = new URL(dest).href; } catch (e) { dest = "https://carepaymentsgroup.com/"; }
+  var msg = who + " clicked " + src + " " + new Date().toISOString();
+  var u = "https://ntfy.sh/sts-YRTtrc_JA6Pv7AF9awisKcqq/publish?message=" + encodeURIComponent(msg) + "&title=" + encodeURIComponent("Email click");
+  var img = new Image();
+  img.src = u;
+  setTimeout(function () { location.replace(dest); }, 500);
+})();
+</script>
+<p><a href="https://carepaymentsgroup.com/" style="color:#1cbec8;">Continue</a></p>
+</body>
+</html>
