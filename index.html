@@ -544,8 +544,8 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
               <input type="number" id="backendRate" value="4.752" step="0.001" />
             </div>
             <div>
-              <label for="rebateBasis">Rebate cost basis (%)</label>
-              <input type="number" id="rebateBasis" value="4.6" step="0.01" />
+              <label for="rebateBps">Rebate (basis points of card volume)</label>
+              <input type="number" id="rebateBps" value="40" step="1" />
             </div>
 
             <div>
@@ -723,8 +723,8 @@ function calculate(){
   const cashIn  = cashVolume * target/100;   // new increase % applied to cash sales volume
 
   $('offsetVal').textContent = `${money(offset + tipCost)} / ${unit}`;
-  const rBasis = parseFloat($('rebateBasis').value)||0;
-  const rebate = volume * Math.max(0, fullRate - rBasis)/100;
+  const rBps = parseFloat($('rebateBps').value);
+  const rebate = volume * (isNaN(rBps) ? 40 : rBps)/10000;   // 40 bps = $400 per $100k card volume
   $('cashLabel').textContent = 'Monthly rebate';
   $('cashVal').textContent   = `${money(rebate)} / mo`;
   $('pcCashUp').textContent  = `Cash brings in ${money(cashIn)} more/mo`;
@@ -736,7 +736,7 @@ function setTips(on){
 }
 
 const FIELDS = ['bizName','volume','cashVolume','transactionCount','targetRate','currentRate',
-  'backendRate','rebateBasis','currentPassRate','currentProgramCost','tipValue'];
+  'backendRate','rebateBps','currentPassRate','currentProgramCost','tipValue'];
 const SKEY = 's2s_price_v1';
 function syncPrime49(){
   const on = $('prime49').checked;
@@ -773,7 +773,7 @@ function loadState(){
 function reset(){
   try{ localStorage.removeItem(SKEY); }catch(e){}
   const d = {bizName:'',volume:50000,cashVolume:10000,transactionCount:1000,targetRate:5,
-             backendRate:4.752,rebateBasis:4.6,currentRate:2.9,currentPassRate:4,currentProgramCost:3.84,tipValue:2};
+             backendRate:4.752,rebateBps:40,currentRate:2.9,currentPassRate:4,currentProgramCost:3.84,tipValue:2};
   Object.entries(d).forEach(([k,v]) => $(k).value = v);
   $('takesTips').checked = false;
   $('isPassing').checked = false;
