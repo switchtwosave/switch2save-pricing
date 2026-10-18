@@ -99,7 +99,8 @@ h1 em{font-style:italic;color:var(--teal)}
 .ttl{font-size:calc(var(--f)*.72);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:0 0 calc(var(--u)*.75)}
 
 /* ---------- inputs ---------- */
-.col{flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:calc(var(--u)*.6);min-height:0;overflow:hidden}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:calc(var(--u)*.6);min-height:0;overflow-x:hidden;overflow-y:auto}
+.col>*{flex-shrink:0}
 .botstack{margin-top:auto;display:flex;flex-direction:column;gap:calc(var(--u)*.5);flex:0 0 auto}
 .avgbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.15);
   background:radial-gradient(120% 140% at 50% 0%,rgba(63,208,201,.14),transparent 70%),#101719;
@@ -166,6 +167,11 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*.9)}
 .seg.wrap4{flex-wrap:wrap}
 .seg.wrap4 button{flex:1 1 40%;font-size:calc(var(--f)*.78);padding:calc(var(--u)*.35) calc(var(--u)*.4)}
+#segProgram{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-radius:14px}
+#segProgram button{min-width:0;white-space:normal}
+#segProgram .middle{grid-column:1 / -1}
+#existingRow.merchant-paid{grid-template-columns:1fr}
+.program-note{font-size:calc(var(--f)*.74);color:var(--faint);line-height:1.4;margin:calc(var(--u)*.5) 0 0}
 .seg{display:flex;gap:6px;background:#0e1416;border:1px solid var(--line);border-radius:999px;padding:4px}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);border-radius:999px;
   padding:calc(var(--u)*.6) calc(var(--u)*.5);font-size:calc(var(--f)*.78);font-weight:600;white-space:nowrap;
@@ -292,13 +298,15 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 .opt.new{background:linear-gradient(180deg,rgba(87,217,119,.09),transparent 70%)}
 .opt.new .ov{color:var(--green)}
 
-.mny{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.9)}
+.mny{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--u)*.6)}
 .m{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.12);
   background:#101719;border:1px solid var(--line-soft);border-radius:14px;
-  padding:calc(var(--u)*.6) calc(var(--u)*.8)}
-.ml{font-size:calc(var(--f)*.78);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.mv{font-size:calc(var(--f)*1.45);font-weight:800;white-space:nowrap}
+  min-width:0;text-align:center;padding:calc(var(--u)*.6) calc(var(--u)*.5)}
+.ml{font-size:calc(var(--f)*.78);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;
+  min-height:2.7em;display:grid;place-items:center}
+.mv{font-size:calc(var(--f)*1.3);font-weight:800;max-width:100%;overflow-wrap:anywhere}
 .mv.green{color:var(--green)}
+.mu{font-size:calc(var(--f)*.72);color:var(--faint)}
 
 .promise{flex:0 0 auto;text-align:center;border:1px dashed rgba(63,208,201,.4);border-radius:999px;
   padding:calc(var(--u)*.55) calc(var(--u)*1);font-size:calc(var(--f)*.88);font-weight:800;color:var(--teal);
@@ -358,6 +366,12 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
   .grid{grid-template-columns:1fr}
   .band{grid-template-columns:repeat(2,1fr)}
 }
+@media (max-width:560px){
+  .same .mny{grid-template-columns:1fr}
+  .same .m{flex-direction:row;gap:8px}
+  .same .ml{min-height:0;text-align:left;display:block;margin-right:auto}
+  .same .mv,.same .mu{flex:0 0 auto}
+}
 
 /* guided 1-2-3 */
 .out{counter-reset:none}
@@ -381,6 +395,7 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
     <a class="meet" href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmeet.google.com%2F" target="_blank" rel="noopener">🎥 Google Meet</a>
     <a class="planner" href="index.html">📈 Price Increase Planner</a>
     <a class="review" href="review.html">⭐ Review QR</a>
+    <a class="planner" href="smart-track.html">Smart Track</a>
   </nav>
 
   <header class="top">
@@ -436,7 +451,8 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
             <span class="qn">3</span>
             <div class="qb">
               <label class="ql" for="cashVolume">How much comes in as cash each month?</label>
-              <input type="number" id="cashVolume" value="10000" min="0" />
+              <input type="number" id="cashVolume" value="10000" min="0" aria-describedby="cashVolumeHint" />
+              <span class="qh" id="cashVolumeHint">Before this price increase.</span>
             </div>
           </div>
           </div>
@@ -477,7 +493,7 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 
           <div class="tgwrap" id="wrapPassing">
             <div class="tg">
-              <div><span class="tl">Already passing fees today?</span><span class="th">Leave off if this is brand new to them.</span></div>
+              <div><span class="tl">Compare their current program?</span><span class="th">Select how they process cards today.</span></div>
               <span class="sw lg"><input type="checkbox" id="isPassing" /><i></i></span>
             </div>
             <div class="reveal">
@@ -487,14 +503,17 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
                   <div class="seg wrap4" id="segProgram">
                     <button data-prog="surcharge" class="on">Surcharging</button>
                     <button data-prog="cashdisc">Cash discounting</button>
+                    <button data-prog="traditional" class="middle">Interchange / Flat Rate</button>
                     <button data-prog="dual">Dual pricing</button>
-                    <button data-prog="admin">Admin fee</button>
+                    <button data-prog="admin">Service Charge</button>
                   </div>
                 </div>
                 <div class="two" id="existingRow">
-                  <div><label for="currentPassRate">Fees passed today (%)</label><input type="number" id="currentPassRate" value="4" step="0.01" /></div>
-                  <div><label for="currentProgramCost">Current cost to merchant (%)</label><input type="number" id="currentProgramCost" value="3.84" step="0.01" /></div>
+                  <div id="currentPassField"><label for="currentPassRate">Fees passed today (%)</label><input type="number" id="currentPassRate" value="4" step="0.01" /></div>
+                  <div><label for="currentProgramCost" id="currentProgramCostLabel">Current cost to merchant (%)</label><input type="number" id="currentProgramCost" value="3.84" step="0.01" aria-describedby="traditionalHelp" /></div>
                 </div>
+                <p class="program-note hide" id="traditionalHelp">Merchant pays processing; no customer fee is assumed. Use total statement processing fees &divide; card sales &times; 100 as the all-in effective rate. Include markup and per-item/monthly fees; interchange-plus varies.</p>
+                <p class="program-note hide" id="traditionalRebateNote">The rebate below estimates the proposed program using Advanced settings. It is not a rebate from today's processing; confirm eligibility.</p>
               </div>
             </div>
           </div>
@@ -524,12 +543,13 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 
         <div class="botstack">
           <div class="same">
-            <div class="samek">Same money either way</div>
+            <div class="samek">Estimated monthly impact</div>
             <div class="mny">
-              <div class="m"><span class="ml">Fees you stop eating</span><span class="mv" id="offsetVal">—</span></div>
-              <div class="m"><span class="ml" id="cashLabel">Monthly rebate</span><span class="mv green" id="cashVal">—</span></div>
+              <div class="m"><span class="ml">Fees you stop eating</span><span class="mv" id="offsetVal">—</span><span class="mu">/ mo</span></div>
+              <div class="m"><span class="ml" id="cashLabel">Monthly rebate</span><span class="mv green" id="cashVal">—</span><span class="mu">/ mo</span></div>
+              <div class="m"><span class="ml">Monthly cash profit</span><span class="mv green" id="cashProfitVal">—</span><span class="mu">/ mo</span></div>
             </div>
-            <div class="samen">Identical either way — only the customer experience changes.</div>
+            <div class="samen">Cash profit: added cash revenue before other costs, at unchanged sales volume.</div>
           </div>
         </div>
 
@@ -591,7 +611,7 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
           <ul class="pc">
             <li class="no" id="pcToday1">You eat the processing fee on every card sale</li>
             <li class="no" id="pcToday2">Gone every month, nothing to show for it</li>
-            <li class="no">Your menu price is not your real price</li>
+            <li class="no" id="pcToday3">Your menu price is not your real price</li>
           </ul>
         </div>
 
@@ -644,7 +664,7 @@ const pct   = n => (Number.isFinite(n)?n:0).toFixed(2)+'%';
 const num   = n => (Number.isFinite(n)?n:0).toLocaleString('en-US',{maximumFractionDigits:2});
 
 let progMode='surcharge';
-const PROG_LABEL={surcharge:'Surcharging',cashdisc:'Cash discounting',dual:'Dual pricing',admin:'Admin fee / service charge'};
+const PROG_LABEL={surcharge:'Surcharging',cashdisc:'Cash discounting',traditional:'Interchange / Flat Rate',dual:'Dual pricing',admin:'Service Charge'};
 
 function seg(container, key, cb){
   const el = $(container);
@@ -663,12 +683,19 @@ function calculate(){
   const target = parseFloat($('targetRate').value)||0;
   const backend= parseFloat($('backendRate').value)||0;
   const nowRate= parseFloat($('currentRate').value)||0;
-  const passed = parseFloat($('currentPassRate').value)||0;
+  const existing = merchantType==='existing';
+  const traditional = existing && progMode==='traditional';
+  // Keep the other programs' saved customer-fee input, but never apply it to merchant-paid processing.
+  const passed = traditional ? 0 : (parseFloat($('currentPassRate').value)||0);
   const curCost= parseFloat($('currentProgramCost').value)||0;
   const tips   = $('takesTips').checked;
   const tipRaw = tips ? (parseFloat($('tipValue').value)||0) : 0;
 
-  const existing = merchantType==='existing';
+  $('currentPassField').classList.toggle('hide',traditional);
+  $('existingRow').classList.toggle('merchant-paid',traditional);
+  $('traditionalHelp').classList.toggle('hide',!traditional);
+  $('traditionalRebateNote').classList.toggle('hide',!traditional);
+  $('currentProgramCostLabel').textContent = traditional ? 'All-in effective rate (%)' : 'Current cost to merchant (%)';
 
   const tipPct = !tips ? 0 : (tipMode==='percent' ? tipRaw : (total>0 ? tipRaw/total*100 : 0));
   const tipDollars = !tips ? 0 : (tipMode==='percent' ? total*tipRaw/100 : tipRaw);
@@ -684,7 +711,8 @@ function calculate(){
     surcharge: {l:'Posted price',  r:'Charged on card', op:`${pct(passed)} surcharge added at the register`},
     cashdisc:  {l:'Cash price',    r:'Posted price',    op:`posted price is the card price — ${pct(passed)} off for cash`},
     dual:      {l:'Cash price',    r:'Card price',      op:`both prices posted — ${pct(passed)} apart`},
-    admin:     {l:'Menu price',    r:'Total on card',   op:`${pct(passed)} service charge added to the bill`}
+    admin:     {l:'Menu price',    r:'Total on card',   op:`${pct(passed)} service charge added to the bill`},
+    traditional:{l:'Cash price',  r:'Card price',      op:'Same price; no customer processing fee'}
   };
   const d = existing ? DISP[progMode] : {l:'Cash price', r:'Card price', op:`one price for everyone — you absorb ${pct(nowRate)}`};
   $('lblBase').textContent  = d.l;
@@ -692,10 +720,11 @@ function calculate(){
   $('basePrice').textContent = money(base);
   $('todayPrice').textContent = money(swiped);
   $('feeOp').textContent = d.op;
-  $('pcToday1').textContent = existing
+  $('pcToday1').textContent = traditional ? `You pay ${pct(curCost)} in processing fees` : existing
     ? `You still eat ${pct(Math.max(0,curCost-passed))} after what you pass on`
     : `You eat ${pct(nowRate)} on every card sale`;
   $('pcToday2').textContent = `${money(volume*(existing?Math.max(0,curCost-passed):nowRate)/100)} a month, gone`;
+  $('pcToday3').textContent = traditional ? 'Processing comes out of your receipts' : 'Your menu price is not your real price';
 
   // deposit flow — what actually lands in the bank
   const feeRate = existing ? curCost : nowRate;
@@ -720,13 +749,14 @@ function calculate(){
   // cash impact stack
   const offset = volume * feeRate/100;
   const tipCost = tips ? tipDollars * feeRate/100 : 0;
-  const cashIn  = cashVolume * target/100;   // new increase % applied to cash sales volume
+  const cashIn  = cashVolume * target/100;   // additional revenue on cash sales BEFORE the proposed increase
 
-  $('offsetVal').textContent = `${money(offset + tipCost)} / ${unit}`;
+  $('offsetVal').textContent = money(offset + tipCost);
   const rBps = parseFloat($('rebateBps').value);
   const rebate = volume * (isNaN(rBps) ? 40 : rBps)/10000;   // 40 bps = $400 per $100k card volume
   $('cashLabel').textContent = 'Monthly rebate';
-  $('cashVal').textContent   = `${money(rebate)} / mo`;
+  $('cashVal').textContent   = money(rebate);
+  $('cashProfitVal').textContent = money(cashIn);
   $('pcCashUp').textContent  = `Cash brings in ${money(cashIn)} more/mo`;
 }
 
@@ -804,6 +834,11 @@ function reset(){
     calculate();
   });
   $('currentProgramCost').addEventListener('input', () => { syncRate(); calculate(); });
+  $('currentRate').addEventListener('input', () => {
+    if (merchantType === 'existing' && progMode === 'traditional') {
+      $('currentProgramCost').value = $('currentRate').value;
+    }
+  });
   seg('segProgram','prog',      v => { progMode=v; syncRate(); calculate(); });
   seg('segRound','round',       v => { roundMode=v; calculate(); });
   seg('segTip','tip',           v => {
