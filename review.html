@@ -347,6 +347,18 @@
     </div>
   </div>
 
+  <div class="row">
+    <div class="fld">
+      <label>Or upload your own QR code — replaces the QR on the card</label>
+      <div class="drop" id="qrDrop">
+        <img class="prev" id="qrPrev" style="display:none">
+        <div class="d1" id="qrDropTitle">🔳 Drop your QR code or click — optional</div>
+        <div class="d2">PNG · JPG · WebP · Typing a link above will replace it</div>
+      </div>
+      <input type="file" id="qrFile" accept="image/*" hidden>
+    </div>
+  </div>
+
   <!-- COLORS -->
   <div class="colors-head">Colors</div>
   <div class="colgrid">
@@ -542,7 +554,30 @@ function refreshURL(){
     bar.style.color='#8b95a1';bar.style.background='#fff';bar.style.borderColor='#e3e6ea';
   }
 }
-$('url').addEventListener('input',refreshURL);
+$('url').addEventListener('input',()=>{clearCustomQR();refreshURL();});
+/* ---------- upload your own QR ---------- */
+function clearCustomQR(){
+  $('qrPrev').style.display='none';$('qrPrev').removeAttribute('src');
+  $('qrDropTitle').textContent='🔳 Drop your QR code or click — optional';
+  $('qrFile').value='';
+}
+function useCustomQR(f){
+  if(!f||!/^image\//.test(f.type))return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const d=ev.target.result;
+    $('qrImg').src=d;
+    $('qrPrev').src=d;$('qrPrev').style.display='inline-block';
+    $('qrDropTitle').textContent='Your QR added — click to replace';
+    const bar=$('urlBar');
+    bar.textContent='Using your uploaded QR code.';bar.style.color='#2f6b3a';bar.style.background='#eef7ef';bar.style.borderColor='#cfe6d2';
+  };
+  r.readAsDataURL(f);
+}
+$('qrDrop').onclick=()=>$('qrFile').click();
+$('qrFile').onchange=e=>useCustomQR(e.target.files[0]);
+$('qrDrop').ondragover=e=>e.preventDefault();
+$('qrDrop').ondrop=e=>{e.preventDefault();useCustomQR(e.dataTransfer.files[0]);};
 // New QR = wipe ONLY the QR code, business name and address. Everything else (headlines,
 // body text, logo, colors, template) stays exactly as-is.
 $('newqr').onclick=()=>{
@@ -550,6 +585,7 @@ $('newqr').onclick=()=>{
   ['bizName','addr','url'].forEach(id=>{const el=$(id);if(el)el.value='';});
   // blank the QR
   const q=$('qrImg'); if(q)q.removeAttribute('src');
+  clearCustomQR();
   // reset the green url bar to its prompt
   const bar=$('urlBar');
   if(bar){bar.textContent='Paste your hosted Netlify (or g.page) link above — the QR will point here.';bar.style.color='';bar.style.background='';bar.style.borderColor='';}
