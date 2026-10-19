@@ -38,7 +38,7 @@ body{
   -webkit-font-smoothing:antialiased;
   font-size:var(--f);line-height:1.35;
 }
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 
 /* ---------- shell ---------- */
@@ -109,7 +109,7 @@ h1 em{font-style:italic;color:var(--teal)}
 .avgv{font-size:calc(var(--f)*2.4);font-weight:800;color:var(--text);line-height:1.05;letter-spacing:-.01em}
 .col::-webkit-scrollbar{display:none}
 label{display:block;font-size:calc(var(--f)*.7);letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:calc(var(--u)*.4)}
-input[type=text],input[type=number]{width:100%;padding:calc(var(--u)*.72) calc(var(--u)*.9);border-radius:10px;
+select,input[type=month],input[type=text],input[type=number]{width:100%;padding:calc(var(--u)*.72) calc(var(--u)*.9);border-radius:10px;
   border:1px solid var(--line);background:#0e1416;outline:none;font-size:calc(var(--f)*1.02);font-weight:600;
   transition:border-color .15s,box-shadow .15s}
 
@@ -383,6 +383,30 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 .steplead{display:block;font-size:.78em;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--muted);margin:0 0 .35em}
 
+
+.fee-summary{width:100%;align-items:stretch}
+.fee-summary .mny.current-only{grid-template-columns:1fr}
+.fee-note{font-size:calc(var(--f)*.75);color:var(--faint);line-height:1.45;margin:.4em 0}
+.fee-table{width:100%;border-collapse:collapse;font-size:calc(var(--f)*.75)}
+.fee-table th,.fee-table td{padding:.5em .25em;border-bottom:1px solid var(--line);text-align:right}
+.fee-table th:first-child,.fee-table td:first-child{text-align:left}
+.fee-table th{color:var(--muted)}
+.fee-entry{border:1px solid var(--line);border-radius:12px;padding:calc(var(--u)*.8)}
+.fee-entry summary{font-weight:700;color:var(--teal);cursor:pointer}
+.fee-entry .two,.fee-entry .seg{margin:.7em 0}
+.fee-confirm{margin:.4em 0;white-space:normal}
+.proposal-wait{padding:.8em;text-align:center;color:var(--faint);border:1px solid var(--line);border-radius:12px}
+@media(max-width:560px){.fee-entry .two{grid-template-columns:1fr}.fee-summary .m{flex-wrap:wrap}.fee-table{font-size:12px}}
+
+@media(max-width:980px){.out{flex:none;overflow:visible}.prow.r1,.prow.r2,.prow.r3,.prow.r4{flex:none}.col{overflow:visible}}
+@media(max-width:560px){
+ .top,.steps{flex-wrap:wrap}.steps{margin-left:0}.stamp{margin-left:0}.grid{min-width:0}.card,.qb{min-width:0}
+ .qrow,.qrow.three{grid-template-columns:1fr}.two{grid-template-columns:1fr}
+ .hdr2,.prow{grid-template-columns:1fr}.hdr2 .factsk{display:none}.out::before,.out::after{display:none}
+ .prow{border:1px solid var(--line);border-radius:12px;padding:.7em 0}.prow>:first-child{height:auto}
+ .pc li.gold,.fop{white-space:normal}.same .m{flex-direction:column;align-items:stretch}.same .ml{text-align:center;margin-right:0}
+ .fee-summary .mv,.fee-summary .mu{text-align:center}.fee-note{overflow-wrap:anywhere}
+}
 </style>
 </head>
 <body>
@@ -445,7 +469,7 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
             <span class="qn">2</span>
             <div class="qb">
               <label class="ql" for="volume">How much do they run on cards each month?</label>
-              <input type="number" id="volume" value="50000" min="0" />
+              <input type="number" id="volume" value="50000" min="0" /><span class="qh">Use the same month for every figure. Include customer adjustments and card tips in card receipts; exclude cash. Do not add tips twice.</span>
             </div>
           </div>
           <div class="q">
@@ -542,15 +566,63 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
 
         </div>
 
+        <details class="fee-entry" id="feeInputs">
+          <summary>Enter current fees and our proposal</summary>
+          <p class="fee-note">Enter figures, or confirm visible figures after checking them. Example defaults are not treated as entered data.</p>
+          <div class="two">
+            <div><label for="currentFeesPaid">Actual gross card fees paid this month ($, optional)</label><input type="number" id="currentFeesPaid" min="0" step="0.01" placeholder="Blank uses current rate" /></div>
+            <div><label for="currentRebate">Current rebate earned for this month ($)</label><input type="number" id="currentRebate" min="0" step="0.01" placeholder="Enter 0 if none" /></div>
+          </div>
+          <label for="currentOffsetAmount">Current customer-funded fee offset collected this month ($)</label>
+          <input type="number" id="currentOffsetAmount" min="0" step="0.01" placeholder="Unknown until entered; enter 0 if none" />
+          <p class="fee-note">Enter the supported amount already covering processing fees, net of returned customer fees. Include it once, even if it also appears in deposits. Do not include rebates here. A program name or a deposit alone does not prove an offset.</p>
+          <label for="currentSource">Source of current figures</label>
+          <select id="currentSource"><option value="reported">Merchant-reported / manually entered estimate</option><option value="statement">Statement figures, subject to reconciliation</option></select>
+          <div id="statementProofFields" class="hide">
+            <div class="two"><div><label for="statementRef">Statement / reconciliation reference</label><input type="text" id="statementRef" placeholder="File or report reference" /></div><div><label for="statementMonth">Reconciled statement month</label><input type="month" id="statementMonth" /></div></div>
+            <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="statementReconciled" /> I reconciled gross fees, collected offsets and earned rebates to this month's statement and settled sales. Deposits are a cross-check, not an additional offset.</label>
+            <p class="fee-note">Statement verification records the preparer's confirmation. This calculator does not independently read or reconcile the statement.</p>
+          </div>
+          <p class="fee-note">Statement fees must match this month's card volume, before offsets or rebates. Otherwise enter an all-in effective rate including transaction and monthly charges. Rebates below are earned credits, not payments received.</p>
+          <button class="ghost sm fee-confirm" id="confirmCurrent" type="button">Confirm visible current figures</button>
+          <label style="margin-top:.8em">Which program with us?</label>
+          <div class="seg wrap4" id="segProposed">
+            <button data-offer="surcharge">Surcharging</button><button data-offer="cashdisc">Cash discounting</button>
+            <button data-offer="traditional" class="middle">Interchange / Flat Rate</button>
+            <button data-offer="dual">Dual pricing</button><button data-offer="admin">Service Charge</button>
+          </div>
+          <div id="proposedPassFields" class="two">
+            <div><label for="proposedPassRate" id="proposedPassLabel">Customer charge / price spread (%)</label><input type="number" id="proposedPassRate" min="0" max="100" step="0.01" placeholder="Enter agreed terms" /></div>
+            <div><label for="proposedEligiblePct">Share of card receipts eligible for this adjustment (%)</label><input type="number" id="proposedEligiblePct" min="0" max="100" placeholder="Enter eligible share" /></div>
+          </div>
+          <p class="fee-note">Enter the eligible card share; do not assume all cards qualify. Cash discounts are off the posted card price. Other adjustments are above the base price. Estimates do not establish program eligibility.</p>
+          <div class="two">
+            <div><label for="backendRate">Our all-in gross processing rate (%)</label><input type="number" id="backendRate" value="4.752" min="0" max="100" step="0.001" /></div>
+            <div><label for="rebateBps">Our agreed rebate (basis points of card receipts)</label><input type="number" id="rebateBps" value="40" min="0" max="10000" step="1" /></div>
+          </div>
+          <button class="ghost sm fee-confirm" id="confirmProposal" type="button">Confirm visible proposal terms</button>
+        </details>
         <div class="botstack">
-          <div class="same">
-            <div class="samek">Estimated monthly impact</div>
-            <div class="mny">
-              <div class="m"><span class="ml">Fees you stop eating</span><span class="mv" id="offsetVal">—</span><span class="mu">/ mo</span></div>
-              <div class="m"><span class="ml" id="cashLabel">Monthly rebate</span><span class="mv green" id="cashVal">—</span><span class="mu">/ mo</span></div>
-              <div class="m"><span class="ml">Monthly cash profit</span><span class="mv green" id="cashProfitVal">—</span><span class="mu">/ mo</span></div>
+          <div class="same fee-summary" aria-live="polite">
+            <div class="samek" id="feeSummaryTitle">Where you are now</div>
+            <div class="mny current-only" id="feeCards">
+              <div class="m"><span class="ml" id="currentFeeLabel">Current gross card fees</span><span class="mv" id="currentFeeVal">—</span><span class="mu">/ mo gross fees</span><span class="fee-note" id="currentCoverage">Offset unknown</span><span class="fee-note" id="currentNetBrief">Net merchant-paid cost unknown</span></div>
+              <div class="m hide" id="withUsCard"><span class="ml">Gross card fees with us · estimate</span><span class="mv" id="withUsFeeVal">—</span><span class="mu">/ mo</span></div>
+              <div class="m hide" id="savingsCard"><span class="ml" id="offsetLabel">Estimated net cost reduction</span><span class="mv" id="offsetVal">—</span><span class="mu">/ mo</span></div>
             </div>
-            <div class="samen">Cash profit: added cash revenue before other costs, at unchanged sales volume.</div>
+            <p class="fee-note" id="currentFeeBasis"></p><p class="fee-note" id="currentSourceLabel"></p>
+            <p class="fee-note" id="feeReadiness"></p>
+            <div id="feeComparison" class="hide">
+              <p class="fee-note" id="feeComparisonBasis"></p>
+              <table class="fee-table" aria-label="Monthly fees and offsets"><thead><tr><th>Monthly breakdown</th><th>Current</th><th>With us</th></tr></thead><tbody>
+                <tr><td>Customer-funded offset</td><td id="currentOffsetVal">—</td><td id="proposedOffsetVal">—</td></tr>
+                <tr><td>Cost after customer offset</td><td id="currentNetVal">—</td><td id="proposedNetVal">—</td></tr>
+                <tr><td>Estimated / entered rebate earned</td><td id="currentRebateVal">—</td><td id="cashVal">—</td></tr>
+                <tr><td>Net merchant cost after rebate</td><td id="currentAfterVal">—</td><td id="proposedAfterVal">—</td></tr>
+              </tbody></table>
+              <p class="fee-note">Gross processing fees are charged before offsets and rebates. Rebates shown are earned estimates or entered credits, not money paid. A negative net cost means offsets exceed fees.</p>
+              <p class="fee-note"><span id="cashLabel">Monthly cash profit</span>: <strong id="cashProfitVal">—</strong> / mo. Added cash price-increase revenue before costs, at unchanged quantities; excluded from card fee savings.</p>
+            </div>
           </div>
         </div>
 
@@ -560,15 +632,6 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
         <details class="adv">
           <summary>Advanced settings</summary>
           <div class="advbody">
-            <div>
-              <label for="backendRate">New cost rate to merchant (%)</label>
-              <input type="number" id="backendRate" value="4.752" step="0.001" />
-            </div>
-            <div>
-              <label for="rebateBps">Rebate (basis points of card volume)</label>
-              <input type="number" id="rebateBps" value="40" step="1" />
-            </div>
-
             <div>
               <label>Ticket rounding</label>
               <div class="seg" id="segRound">
@@ -616,9 +679,10 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
           </ul>
         </div>
 
-        <div class="prow r3">
+        <p class="proposal-wait" id="proposalWait">Complete the current figures and proposal terms to see the price-increase illustration.</p>
+        <div class="prow r3 hide" id="proposalPriceRow">
           <div class="rec t3">
-            <div class="reck">Our solution</div>
+            <div class="reck">Separate price-increase illustration</div>
             <div class="recgrid">
               <div class="rcell"><span class="rcl">Price increase</span><span class="rcv" id="recRate">—</span></div>
               <span class="rsep" aria-hidden="true"></span>
@@ -627,12 +691,12 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
           </div>
           <ul class="pc">
             <li class="ok">One small move on posted prices</li>
-            <li class="ok">Covers your processing cost</li>
+            <li class="ok">Fee coverage is shown in the monthly comparison</li>
             <li class="ok">A step up from where you are — not a restart</li>
           </ul>
         </div>
 
-        <div class="prow r4">
+        <div class="prow r4 hide" id="proposalFutureRow">
           <div class="opts t4">
             <div class="opt new">
               <div class="tag new">The future of payments</div>
@@ -642,10 +706,10 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,208,201,.16)}
             </div>
           </div>
           <ul class="pc">
-            <li class="ok">One posted price on everything</li>
-            <li class="ok">No signage, no compliance rules</li>
-            <li class="ok">No questions at the register</li>
-            <li class="ok">No second price to maintain</li>
+            <li class="ok">Illustrates the entered posted-price increase</li>
+            <li class="ok">Confirm the selected program's requirements</li>
+            <li class="ok">Separate from customer-funded fee offsets</li>
+            <li class="ok">Not included in the card fee savings above</li>
             <li class="ok gold" id="pcCashUp">—</li>
           </ul>
         </div>
@@ -664,7 +728,8 @@ const money = n => (Number.isFinite(n)?n:0).toLocaleString('en-US',{style:'curre
 const pct   = n => (Number.isFinite(n)?n:0).toFixed(2)+'%';
 const num   = n => (Number.isFinite(n)?n:0).toLocaleString('en-US',{maximumFractionDigits:2});
 
-let progMode='surcharge';
+let progMode='surcharge', proposedMode='';
+let reviewed=Object.create(null);
 const PROG_LABEL={surcharge:'Surcharging',cashdisc:'Cash discounting',traditional:'Interchange / Flat Rate',dual:'Dual pricing',admin:'Service Charge'};
 
 function seg(container, key, cb){
@@ -674,6 +739,100 @@ function seg(container, key, cb){
     el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
     cb(b.dataset[key]);
   });
+}
+
+// Defaults and legacy saved values require entry or an explicit review before use.
+const CURRENT_FIELDS=['bizName','volume','cashVolume','transactionCount','currentRate','currentProgramCost','currentPassRate','currentOffsetAmount','currentFeesPaid','currentRebate','tipValue','statementRef','statementMonth'];
+const PROPOSAL_FIELDS=['targetRate','backendRate','rebateBps','proposedPassRate','proposedEligiblePct'];
+function markReviewed(id){ reviewed[id]=String($(id).value).trim(); }
+function enteredNumber(id,min=0,max=Number.MAX_SAFE_INTEGER/10000){
+  const raw=String($(id).value).trim(), n=Number(raw);
+  return raw!=='' && reviewed[id]===raw && Number.isFinite(n) && n>=min && n<=max ? n : null;
+}
+function feeState(){
+  const volume=enteredNumber('volume',0.01), currentId=merchantType==='existing'?'currentProgramCost':'currentRate';
+  const rate=enteredNumber(currentId,0,100), actualRaw=String($('currentFeesPaid').value).trim();
+  const actual=enteredNumber('currentFeesPaid');
+  const gross=volume===null ? null : actualRaw!=='' ? actual : rate===null ? null : volume*rate/100;
+  const required=['bizName','volume','cashVolume','transactionCount','currentRebate','currentOffsetAmount'];
+  const statement=$('currentSource').value==='statement';
+  if(statement) required.push('currentFeesPaid','statementRef','statementMonth','statementReconciled');
+  required.push(actualRaw===''?currentId:'currentFeesPaid');
+  if(merchantType==='existing' && progMode!=='traditional') required.push('currentPassRate');
+  if($('takesTips').checked) required.push('tipValue');
+  const labels={bizName:'business name',volume:'monthly card volume',cashVolume:'monthly cash volume',transactionCount:'monthly card count',currentRate:'current all-in rate',currentProgramCost:'current gross rate',currentFeesPaid:'actual fees paid',currentRebate:'current rebate (0 if none)',currentPassRate:'current customer adjustment',currentOffsetAmount:'current customer-funded offset (0 if none)',statementRef:'statement reference',statementMonth:'statement month',statementReconciled:'statement reconciliation confirmation',tipValue:'tip amount',targetRate:'price increase',backendRate:'our all-in gross rate',rebateBps:'our rebate terms',proposedPassRate:'our customer adjustment',proposedEligiblePct:'our eligible card share'};
+  const valid=id=>{
+    if(id==='statementReconciled') return $('statementReconciled').checked;
+    if(id==='statementMonth') return /^\d{4}-(0[1-9]|1[0-2])$/.test(String($(id).value)) && reviewed[id]===String($(id).value);
+    if(id==='bizName'||id==='statementRef') return String($(id).value).trim()!=='' && reviewed[id]===String($(id).value).trim();
+    const max=['currentRate','currentProgramCost','currentPassRate','targetRate','backendRate','proposedPassRate','proposedEligiblePct'].includes(id)?100:id==='rebateBps'?10000:id==='tipValue'&&tipMode==='percent'?100:Number.MAX_SAFE_INTEGER/10000;
+    const n=enteredNumber(id,id==='volume'?0.01:id==='transactionCount'?1:0,max);
+    return n!==null && (id!=='transactionCount'||Number.isInteger(n));
+  };
+  const currentMissing=[...new Set(required)].filter(id=>!valid(id));
+  const offerRequired=['targetRate','backendRate','rebateBps'];
+  if(proposedMode!=='traditional') offerRequired.push('proposedPassRate','proposedEligiblePct');
+  const offerMissing=offerRequired.filter(id=>!valid(id));
+  if(!Object.hasOwn(PROG_LABEL,proposedMode)) offerMissing.unshift('program');
+  // Compare the same gross monthly card receipts, including any customer adjustment.
+  // Cash discount is off posted card price; other adjustments are above the base price.
+  const recovery=(mode,amount,adjustment,eligible)=> mode==='traditional'?0:
+    amount*eligible/100*(mode==='cashdisc'?adjustment/100:adjustment/(100+adjustment));
+  const ready=currentMissing.length===0 && offerMissing.length===0 && gross!==null;
+  const currentOffset=enteredNumber('currentOffsetAmount'), currentRebate=enteredNumber('currentRebate');
+  const currentNet=gross===null||currentOffset===null?null:gross-currentOffset;
+  const currentAfter=currentNet===null||currentRebate===null?null:currentNet-currentRebate;
+  const statementVerified=statement&&gross!==null&&actualRaw!==''&&currentOffset!==null&&currentRebate!==null&&['currentFeesPaid','statementRef','statementMonth','statementReconciled'].every(valid);
+  const baseline={ready,gross,volume,rate,actual:actualRaw!=='',currentMissing,offerMissing,labels,currentOffset,currentRebate,currentNet,currentAfter,statement,statementVerified};
+  if(!ready) return baseline;
+  const proposedOffset=recovery(proposedMode,volume,Number($('proposedPassRate').value),Number($('proposedEligiblePct').value));
+  const proposedGross=volume*Number($('backendRate').value)/100;
+  const rebate=volume*Number($('rebateBps').value)/10000;
+  const proposedNet=proposedGross-proposedOffset, proposedAfter=proposedNet-rebate;
+  return {...baseline,proposedOffset,proposedGross,rebate,proposedNet,proposedAfter,savings:currentAfter-proposedAfter};
+}
+function renderFeeSummary(){
+  const f=feeState();
+  $('statementProofFields').classList.toggle('hide',!f.statement);
+  const known=n=>n===null?'unknown':money(n);
+  const coverage=f.currentOffset===null?'Offset status unknown':f.gross===null?'Offset entered; gross fees unknown':f.currentOffset===0?'No customer-funded offset':f.currentOffset<f.gross?'Partially offset':'Gross fees fully offset';
+  $('currentCoverage').textContent=`${coverage}. Customer-funded offset: ${known(f.currentOffset)} / mo.`;
+  $('currentNetBrief').textContent=`Net merchant-paid cost after earned rebates: ${known(f.currentAfter)} / mo.`;
+  $('currentSourceLabel').textContent=f.statementVerified?`Source: statement-verified, preparer confirmed. ${$('statementMonth').value}; reference: ${$('statementRef').value}.`:f.statement?'Source: statement verification incomplete. Current amounts remain unverified until matching fees, offsets and rebates are reconciled.':'Source: merchant-reported / manually entered estimate. No statement verification claimed.';
+  $('proposedPassFields').classList.toggle('hide',proposedMode==='traditional');
+  $('proposedPassLabel').textContent=proposedMode==='cashdisc'?'Cash discount off card price (%)':'Customer charge / price spread (%)';
+  $('feeSummaryTitle').textContent=f.ready?'Your monthly fee comparison':'Where you are now';
+  $('currentFeeLabel').textContent=f.actual?'Current gross card fees · entered':'Current gross card fees · estimate';
+  $('currentFeeVal').textContent=f.gross===null?'—':money(f.gross);
+  $('currentFeeBasis').textContent=f.gross===null?'Enter or confirm monthly card volume and a valid current rate or actual gross fees paid. Defaults are not confirmed data.':f.actual?`${money(f.gross)} entered fees on ${money(f.volume)} card receipts for the same month, before customer offsets or rebates.`:`${money(f.volume)} monthly card receipts × ${pct(f.rate)} current all-in rate. Estimated gross fees before customer offsets or rebates.`;
+  $('feeReadiness').textContent=f.ready?'Comparison ready. Missing or invalid required figures restore the current view.':
+    'Still needed: '+[...f.currentMissing.map(id=>f.labels[id]),...f.offerMissing.map(id=>id==='program'?'select our program':f.labels[id])].join(', ')+'. Enter or confirm the visible figures after checking them.';
+  $('feeCards').classList.toggle('current-only',!f.ready);
+  ['withUsCard','savingsCard','feeComparison','proposalPriceRow','proposalFutureRow'].forEach(id=>$(id).classList.toggle('hide',!f.ready));
+  $('proposalWait').classList.toggle('hide',f.ready);
+  const values={withUsFeeVal:f.proposedGross,offsetVal:f.savings,currentOffsetVal:f.currentOffset,proposedOffsetVal:f.proposedOffset,currentNetVal:f.currentNet,proposedNetVal:f.proposedNet,currentRebateVal:f.currentRebate,cashVal:f.rebate,currentAfterVal:f.currentAfter,proposedAfterVal:f.proposedAfter};
+  Object.entries(values).forEach(([id,value])=>$(id).textContent=f.ready?money(value):'—');
+  $('offsetLabel').textContent=f.ready&&f.savings<0?'Estimated net cost increase':'Estimated net cost reduction';
+  if(f.ready && f.savings<0) $('offsetVal').textContent=money(-f.savings);
+  $('cashLabel').textContent='Monthly cash profit';
+  $('cashProfitVal').textContent=f.ready?money(Number($('cashVolume').value)*Number($('targetRate').value)/100):'—';
+  $('feeComparisonBasis').textContent=f.ready?`${PROG_LABEL[proposedMode]} with us. Both sides use the same ${money(f.volume)} monthly card receipts. The current offset is the entered collected amount; our proposed offset uses its entered eligible card share. Cash sales and future price-increase revenue are excluded from fee savings.`:'';
+  if(!f.ready){
+    ['recRate','recDollar','optOne'].forEach(id=>$(id).textContent='—');
+    $('pcCashUp').textContent='Complete the figures to estimate added cash revenue';
+  }
+  if(f.currentMissing.length){
+    ['avgTicket','basePrice','todayPrice'].forEach(id=>$(id).textContent='—');
+    $('feeOp').textContent='Current figures need entry or confirmation';
+    $('pcToday1').textContent=f.gross===null?'Current fees need card volume and a rate or statement fees':`${money(f.gross)} gross monthly card fees before offsets`;
+    $('pcToday2').textContent='Enter or confirm the remaining current figures';
+    $('pcToday3').textContent='Use one matching monthly period';
+  } else {
+    $('pcToday1').textContent=`${money(f.gross)} gross monthly processing fees`;
+    $('pcToday2').textContent='Customer offsets and rebates are separate';
+    if(merchantType!=='existing') $('feeOp').textContent=`one price; ${pct(f.gross/f.volume*100)} gross effective processing rate`;
+  }
+  return f;
 }
 
 function calculate(){
@@ -696,7 +855,7 @@ function calculate(){
   $('existingRow').classList.toggle('merchant-paid',traditional);
   $('traditionalHelp').classList.toggle('hide',!traditional);
   $('traditionalRebateNote').classList.toggle('hide',!traditional);
-  $('currentProgramCostLabel').textContent = traditional ? 'All-in effective rate (%)' : 'Current cost to merchant (%)';
+  $('currentProgramCostLabel').textContent = traditional ? 'All-in effective rate (%)' : 'Current gross processing rate (%)';
 
   const tipPct = !tips ? 0 : (tipMode==='percent' ? tipRaw : (total>0 ? tipRaw/total*100 : 0));
   const tipDollars = !tips ? 0 : (tipMode==='percent' ? total*tipRaw/100 : tipRaw);
@@ -759,6 +918,7 @@ function calculate(){
   $('cashVal').textContent   = money(rebate);
   $('cashProfitVal').textContent = money(cashIn);
   $('pcCashUp').textContent  = `Cash brings in ${money(cashIn)} more/mo`;
+  renderFeeSummary();
 }
 
 function setTips(on){
@@ -767,7 +927,8 @@ function setTips(on){
 }
 
 const FIELDS = ['bizName','volume','cashVolume','transactionCount','targetRate','currentRate',
-  'backendRate','rebateBps','currentPassRate','currentProgramCost','tipValue'];
+  'backendRate','rebateBps','currentPassRate','currentProgramCost','tipValue',
+  'currentFeesPaid','currentRebate','currentOffsetAmount','statementRef','statementMonth','proposedPassRate','proposedEligiblePct'];
 const SKEY = 's2s_price_v1';
 function syncPrime49(){
   const on = $('prime49').checked;
@@ -778,7 +939,7 @@ function syncPrime49(){
 function saveState(){
   try{
     const o = {f:{}, isPassing:$('isPassing').checked, takesTips:$('takesTips').checked,
-               prime49:$('prime49').checked, progMode, roundMode, tipMode};
+               prime49:$('prime49').checked, progMode, proposedMode, roundMode, tipMode, feeReviewVersion:2, reviewed, currentSource:$('currentSource').value, statementReconciled:$('statementReconciled').checked};
     FIELDS.forEach(id => o.f[id] = $(id).value);
     localStorage.setItem(SKEY, JSON.stringify(o));
   }catch(e){}
@@ -792,7 +953,12 @@ function loadState(){
   $('isPassing').checked = !!o.isPassing;
   merchantType = o.isPassing ? 'existing' : 'new';
   $('wrapPassing').classList.toggle('open', !!o.isPassing);
-  if(o.progMode) progMode = o.progMode;
+  if(Object.hasOwn(PROG_LABEL,o.progMode)) progMode = o.progMode;
+  if(Object.hasOwn(PROG_LABEL,o.proposedMode)) proposedMode = o.proposedMode;
+  $('currentSource').value=o.currentSource==='statement'?'statement':'reported';
+  $('statementReconciled').checked=o.feeReviewVersion===2&&o.statementReconciled===true;
+  reviewed=o.feeReviewVersion===2&&o.reviewed&&typeof o.reviewed==='object'?o.reviewed:Object.create(null);
+  $('segProposed').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.offer===proposedMode));
   if(o.roundMode) roundMode = o.roundMode;
   if(o.tipMode) tipMode = o.tipMode;
   [['segProgram','prog',progMode],['segRound','round',roundMode],['segTip','tip',tipMode]]
@@ -802,6 +968,11 @@ function loadState(){
   setTips(!!o.takesTips);
 }
 function reset(){
+  reviewed=Object.create(null); proposedMode=''; progMode='surcharge';
+  $('segProposed').querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  $('segProgram').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.prog==='surcharge'));
+  ['currentFeesPaid','currentRebate','currentOffsetAmount','statementRef','statementMonth','proposedPassRate','proposedEligiblePct'].forEach(id=>$(id).value='');
+  $('currentSource').value='reported'; $('statementReconciled').checked=false;
   try{ localStorage.removeItem(SKEY); }catch(e){}
   const d = {bizName:'',volume:50000,cashVolume:10000,transactionCount:1000,targetRate:5,
              backendRate:4.752,rebateBps:40,currentRate:2.9,currentPassRate:4,currentProgramCost:3.84,tipValue:2};
@@ -834,23 +1005,30 @@ function reset(){
     syncRate();
     calculate();
   });
-  $('currentProgramCost').addEventListener('input', () => { syncRate(); calculate(); });
+  $('currentProgramCost').addEventListener('input', () => { $('currentRate').value=$('currentProgramCost').value; markReviewed('currentRate'); });
   $('currentRate').addEventListener('input', () => {
-    if (merchantType === 'existing' && progMode === 'traditional') {
-      $('currentProgramCost').value = $('currentRate').value;
+    if (merchantType === 'existing') {
+      $('currentProgramCost').value = $('currentRate').value; markReviewed('currentProgramCost');
     }
   });
-  seg('segProgram','prog',      v => { progMode=v; syncRate(); calculate(); });
+  seg('segProgram','prog', v => { if(v!==progMode){['currentProgramCost','currentPassRate'].forEach(id=>delete reviewed[id]);} progMode=v; syncRate(); calculate(); });
+  seg('segProposed','offer', v => { if(v!==proposedMode){['backendRate','rebateBps','proposedPassRate','proposedEligiblePct'].forEach(id=>delete reviewed[id]);} proposedMode=v; calculate(); saveState(); });
+  $('confirmCurrent').addEventListener('click',()=>{CURRENT_FIELDS.forEach(markReviewed); calculate(); saveState();});
+  $('confirmProposal').addEventListener('click',()=>{PROPOSAL_FIELDS.forEach(markReviewed); calculate(); if(feeState().ready) $('feeInputs').open=false; saveState();});
   seg('segRound','round',       v => { roundMode=v; calculate(); });
   seg('segTip','tip',           v => {
+    if(v!==tipMode) delete reviewed.tipValue;
     tipMode=v;
     $('tipLabel').textContent = v==='percent' ? 'Tip % of total volume' : 'Monthly tip dollars';
     calculate();
   });
 
-  FIELDS.forEach(id => $(id).addEventListener('input', () => { calculate(); saveState(); }));
+  FIELDS.forEach(id => $(id).addEventListener('input', () => { if(CURRENT_FIELDS.includes(id)) $('statementReconciled').checked=false; markReviewed(id); calculate(); saveState(); }));
+  $('currentSource').addEventListener('change',()=>{ $('statementReconciled').checked=false; calculate(); saveState(); });
+  $('statementReconciled').addEventListener('change',()=>{ calculate(); saveState(); });
   $('prime49').addEventListener('change', () => {
     syncPrime49();
+    if($('prime49').checked) markReviewed('targetRate'); else delete reviewed.targetRate;
     calculate(); saveState();
   });
   ['isPassing','takesTips'].forEach(id => $(id).addEventListener('change', saveState));
@@ -867,7 +1045,7 @@ function reset(){
   function syncNav(){ const v = parseFloat($('volume').value)||0;
     $('navPlace').href = 'terminals.html?vol=' + v; $('navApprove').href = 'build.html?vol=' + v; }
   $('volume').addEventListener('input', syncNav); syncNav();
-  setTips(false);
+  setTips($('takesTips').checked);
 })();
 </script>
 </body>
